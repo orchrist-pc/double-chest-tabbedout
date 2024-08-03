@@ -12,6 +12,9 @@ global main_pid := A_Args[1]
 global task := A_Args[2]
 ;MsgBox, "mainpid: " . %main_pid% . " task: " . %task%
 
+global ml_c_logfile := A_Desktop . "\Chest_Monitor.log"
+global ml_e_logfile := A_Desktop . "\Exotic_Monitor.log"
+
 global pToken := -1
 global DESTINY_X := 0
 global DESTINY_Y := 0
@@ -20,7 +23,7 @@ global BorderWidth := 0
 global DESTINY_WIDTH := 0
 global DESTINY_HEIGHT := 0
 global D2_WINDOW_HANDLE := -1
-find_d2()
+find_d2(1)
 
 global monitoring := false
 
@@ -59,16 +62,21 @@ StopMonitoring(wParam, lParam, msg, hwnd) {
 CheckChestOpen()
 {
     ; WinActivate, Destiny 2
-    colors := [0xCBE4FF, 0xCCE4FF, 0xCDE6FF, 0xCCE5FF, 0xCCE6FF, 0xCDE4FF, 0xCCE7FF, 0xCBE5FF, 0xCBE6FF]
+    colors := ["0xFFE4CB", 0xFFE4CB, 0xFFE4CC, 0xFFDECD, 0xFFE5CC, 0xFFE6CC, 0xFFE4CD, 0xFFE7CC, 0xFFE5CB, 0xFFE6CB]
     x := colors.MaxIndex()
+    ; FileAppend, Loot Monitoring | STARTING CHEST DETECTION`n, %ml_c_logfile%
     loop, %x%
 	{	
-    	percent_white := exact_color_check("583|473|34|32", 34, 32, colors[A_Index]) ; checks for the circle around the interact prompt
+        testingfuck := colors[A_Index]
+        ; FileAppend, %A_Index% | %testingfuck%`n, %ml_c_logfile%
+    	percent_white := exact_color_check("583|473|34|32", colors[A_Index], ml_c_logfile) ; checks for the circle around the interact prompt
     	if (percent_white > 0.01)
     	{
+            ; FileAppend, CHEST OPENED SUCCESSFULLY | Pct:%percent_white%`n, %ml_c_logfile%
         	PostMessage, 0x1003, 0, 0, , % "ahk_pid " main_pid
         	SetTimer, CheckChestOpen, Off
     	}
+        ; FileAppend, %A_Index% | Color:%testingfuck% | Pct:%percent_white%`n, %ml_c_logfile%
     }
     Return
 }
@@ -76,19 +84,23 @@ CheckChestOpen()
 CheckExoticDrop()
 {
     ; WinActivate, Destiny 2
-    pct_exotic_1 := exact_color_check("1258|198|20|80", 20, 80, 0xD8BD48) ; check for exotic color on side of screen
-    pct_exotic_2 := exact_color_check("1258|278|20|80", 20, 80, 0xD8BD48)
-    pct_exotic_3 := exact_color_check("1258|358|20|80", 20, 80, 0xD8BD48)
-    pct_exotic_4 := exact_color_check("1258|438|20|80", 20, 80, 0xD8BD48)
-    if (pct_exotic_1 > 0.01 || pct_exotic_2 > 0.01 || pct_exotic_3 > 0.01 || pct_exotic_4 > 0.01)
+    locations := ["1258|198|20|80","1258|278|20|80","1258|358|20|80","1258|438|20|80"]
+    loop, 4
     {
-        PostMessage, 0x1004, 0, 0, , % "ahk_pid " main_pid
-        SetTimer, CheckExoticDrop, Off
+        ; FileAppend, Loot Monitoring | STARTING EXOTIC DETECTION`n, %ml_e_logfile%
+        pct_col1 := exact_color_check(locations[A_Index],0x488DD8,ml_e_logfile)
+        pct_col2 := exact_color_check(locations[A_Index],0x48BDD8,ml_e_logfile)
+        if (pct_col1 > 0.01 || pct_col2 > 0.01)
+        {
+            ; FileAppend, EXOTIC FOUND`n, %ml_e_logfile%
+            PostMessage, 0x1004, 0, 0, , % "ahk_pid " main_pid
+            SetTimer, CheckExoticDrop, Off
+        }
     }
     Return
 }
 
-find_d2() ; find the client area of d2
+find_d2(mode:=0) ; find the client area of d2
 {
     ; Detect the Destiny 2 game window
     WinGet, Destiny2ID, ID, ahk_exe destiny2.exe
@@ -103,7 +115,8 @@ find_d2() ; find the client area of d2
     ; Get the dimensions of the game window's client area
     WinGetPos, X, Y, Width, Height, ahk_id %Destiny2ID%
     if(Y < 1) {
-        WinMove, ahk_exe destiny2.exe,, X, 1
+        if(mode == 0)
+            WinMove, ahk_exe destiny2.exe,, X, 1
     }
     WinGetPos, X, Y, Width, Height, ahk_id %Destiny2ID%
     VarSetCapacity(Rect, 16)
@@ -123,45 +136,49 @@ find_d2() ; find the client area of d2
     return
 }
 
-exact_color_check(coords, w, h, base_color) ; also bad function to check for specific color pixels in a given area
+exact_color_check(coords,base_color,filename:="test") ; also bad function to check for specific color pixels in a given area
 {
+    pD2WindowBitmap := Gdip_BitmapFromHWND(D2_WINDOW_HANDLE,clientOnly:=1)
+    ;Gdip_SaveBitmapToFile(pD2WindowBitmap, A_Desktop . "\" filename . ".png")
+    width := Gdip_GetImageWidth(pD2WindowBitmap)
+    height := Gdip_GetImageHeight(pD2WindowBitmap)
+
+    ; FileAppend, color checking`n, %gs_logfile%
     ; convert the coords to be relative to destiny 
     coords := StrSplit(coords, "|")
-    x := coords[1] + BorderWidth ; + DESTINY_X
-    y := coords[2] + TitleBarHeight ; + DESTINY_Y
+    x := coords[1]
+    y := coords[2]
+    w := coords[3]
+    h := coords[4]
 
-    ; Get the bitmap of the entire window
-    pBitmap := Gdip_BitmapFromHWND(D2_WINDOW_HANDLE)
+    ;MsgBox, %cropX% %cropY% %cropWidth% %cropHeight% %width% %height%
+    ; Create a new bitmap with the cropped dimensions
+    pElementBitmap := Gdip_CreateBitmap(w, h)
+    G := Gdip_GraphicsFromImage(pElementBitmap)
+    Gdip_DrawImage(G, pD2WindowBitmap, 0, 0, w, h, x, y, w, h)
 
-    ; Create a sub-bitmap from the original bitmap
-    pSubBitmap := Gdip_CreateBitmap(w, h)
-    G := Gdip_GraphicsFromImage(pSubBitmap)
-    Gdip_DrawImage(G, pBitmap, 0, 0, w, h, x, y, w, h)
-    Gdip_DeleteGraphics(G)
+    Gdip_DisposeImage(pD2WindowBitmap)
 
-    ; Save the sub-bitmap
-    ; Gdip_SaveBitmapToFile(pSubBitmap, A_ScriptDir . "\test" . coords[1] . "_" . coords[2] . "_" . w . "_" . h . ".png")
-
-    ; Process the sub-bitmap
-    x := 0
-    y := 0
+    colx := 0
+    coly := 0
     white := 0
     total := 0
-    loop %h%
+
+    loop, %h%
     {
-        loop %w%
+        loop, %w%
         {
-            color := (Gdip_GetPixel(pSubBitmap, x, y) & 0x00FFFFFF)
+            color := (Gdip_GetPixelColor(pElementBitmap, colx, coly, 3))
             if (color == base_color)
                 white += 1
             total += 1
-            x+= 1
+            colx += 1
+            ; FileAppend, Color: %color% | Ref: %base_color%`n, %filename%
         }
-        x := 0
-        y += 1
+        colx := 0
+        coly += 1
     }
-    Gdip_DisposeImage(pBitmap)
-    Gdip_DisposeImage(pSubBitmap)
+    Gdip_DisposeImage(pElementBitmap)
     pWhite := white/total
     return pWhite
 }
