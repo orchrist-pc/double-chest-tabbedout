@@ -1959,6 +1959,14 @@ Return
 
         if(mode == 1) ;; Goes to char select with controller inputs
         {
+            360Controller.Buttons.RS.SetState(True)
+            PreciseSleep(50)
+            360Controller.Buttons.RS.SetState(False)
+            PreciseSleep(50)
+            360Controller.Buttons.RS.SetState(True)
+            PreciseSleep(50)
+            360Controller.Buttons.RS.SetState(False)
+            PreciseSleep(50)
             360Controller.Buttons.Start.SetState(True)
             PreciseSleep(100)
             360Controller.Buttons.Start.SetState(False)
@@ -2135,6 +2143,14 @@ Return
         }
         if(mode == 1)
         {
+            360Controller.Buttons.RS.SetState(True)
+            PreciseSleep(50)
+            360Controller.Buttons.RS.SetState(False)
+            PreciseSleep(50)
+            360Controller.Buttons.RS.SetState(True)
+            PreciseSleep(50)
+            360Controller.Buttons.RS.SetState(False)
+            PreciseSleep(50)
             360Controller.Buttons.Start.SetState(True)
             PreciseSleep(100)
             360Controller.Buttons.Start.SetState(False)
