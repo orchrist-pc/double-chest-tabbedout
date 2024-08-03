@@ -309,14 +309,17 @@ Return
             HIDE_GUI := 0
             gosub, settingsgui
         }
+        Return
     }
 
     F10::
     {
         360Controller := ""
         MsgBox, Check Device Manager
-        return
+        Return
     }
+
+Return
 ; =================================== ;
 
 ; Main Functions (run the script)
@@ -324,7 +327,7 @@ Return
     tabbedin:
     {
         if (!INPUT_POPUP_HANDLED)
-            return
+            Return
 
         ; Timers during the farm loop cause random interrupts during timing sensitive areas
         SetTimer, check_tabbed_out, Off 
@@ -471,7 +474,7 @@ Return
     tabbedout:
     {
         if (!INPUT_POPUP_HANDLED)
-            return
+            Return
 
         ; Timers during the farm loop cause random interrupts during timing sensitive areas
         SetTimer, check_tabbed_out, Off 
@@ -648,7 +651,7 @@ Return
         PreciseSleep(3000)
         Send, % "{" key_binds["move_forward"] " Up}"
         PreciseSleep(11000)
-        return find_chests()
+        Return find_chests()
     }
 
     find_chests() ; figures out which chest in group 4 is spawned and also waits for chest 21 to spawn
@@ -738,7 +741,7 @@ Return
         PreciseSleep(100)
         Send, % "{" key_binds["hold_zoom"] " Up}"
         PreciseSleep(700)
-        return chest_spots
+        Return chest_spots
     }
 
     group_5_chests(chest_number:=21) ; picks up chest 21
@@ -782,14 +785,14 @@ Return
             StopMonitoring(CHEST_PID)
         CHEST_OPENED := false
         DllCall("mouse_event", uint, 1, int, -4400, int, -500)
-        return group_5_chest_opened
+        Return group_5_chest_opened
     }
 
     group_4_chests(chest_number) ; picks up chests 16-20 
     {
         group_4_chest_opened := false
         if (!chest_number)
-            return group_4_chest_opened
+            Return group_4_chest_opened
         Send, % "{" key_binds["move_right"] " Down}"
         PreciseSleep(400)
         Send, % "{" key_binds["move_right"] " Up}"
@@ -1087,7 +1090,7 @@ Return
         else 
             StopMonitoring(CHEST_PID)
         CHEST_OPENED := false
-        return group_4_chest_opened
+        Return group_4_chest_opened
     }
 ; =================================== ;
 
@@ -1179,7 +1182,7 @@ Return
             StopMonitoring(CHEST_PID)
         CHEST_OPENED := False
 
-        return chest_21_opened
+        Return chest_21_opened
 
     }
 
@@ -1477,10 +1480,10 @@ Return
                 360Controller.Axes.LY.SetState(50)
                 PreciseSleep(50)
                 360Controller.Buttons.LS.SetState(False)
-                controller_aim_hor(85,1100)
+                controller_aim_hor(85,1200)
                 controller_sprint(1300)
                 controller_aim_hor(15,900)
-                controller_sprint(1000)
+                controller_sprint(800)
                 filename := count . "_ChestLoot_19"
                 get_screenshot(filename)
             }
@@ -1548,7 +1551,7 @@ Return
             StopMonitoring(CHEST_PID)
         CHEST_OPENED := False
 
-        return g4_chest_opened
+        Return g4_chest_opened
 
     }
 
@@ -1596,7 +1599,7 @@ Return
         for _, chest_id in CHEST_IDS {
             sum += PLAYER_DATA[CURRENT_GUARDIAN]["ChestStats"][chest_id]["current_" . stat]
         }
-        return sum
+        Return sum
     }
 
     total_chest(stat)
@@ -1618,12 +1621,12 @@ Return
                 sum += PLAYER_DATA[CURRENT_GUARDIAN]["ChestStats"][chest_id]["total_" . stat]
             }
         }
-        return sum
+        Return sum
     }
 
     current_counter(id)
     {
-        return chest_counter(id, PLAYER_DATA[CURRENT_GUARDIAN]["ChestStats"][id]["current_appearances"], PLAYER_DATA[CURRENT_GUARDIAN]["ChestStats"][id]["current_pickups"])
+        Return chest_counter(id, PLAYER_DATA[CURRENT_GUARDIAN]["ChestStats"][id]["current_appearances"], PLAYER_DATA[CURRENT_GUARDIAN]["ChestStats"][id]["current_pickups"])
     }
 
     total_counter(id)
@@ -1646,12 +1649,12 @@ Return
             pickups += PLAYER_DATA[CURRENT_GUARDIAN]["ChestStats"][id]["current_pickups"]
             pickups += PLAYER_DATA[CURRENT_GUARDIAN]["ChestStats"][id]["total_pickups"]
         }
-        return chest_counter(id, appearances, pickups)
+        Return chest_counter(id, appearances, pickups)
     }
 
     chest_counter(id, appearances, pickups)
     {
-        return id ":" Format("[{:3}/{:3}]", pickups, appearances)
+        Return id ":" Format("[{:3}/{:3}]", pickups, appearances)
     }
 
     compute_total_stat(stat)
@@ -1668,7 +1671,7 @@ Return
         {
             total_runs := PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["total_" . stat] + PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_" . stat]
         }
-        return total_runs        
+        Return total_runs        
     }
 
     commit_current_stats()
@@ -1828,7 +1831,7 @@ Return
                 PreciseSleep(2000)                                                                                              
             }
         }
-        return
+        Return
     }
 
     orbit_landing(mode:=0) ; loads into the landing from orbit
@@ -1916,9 +1919,9 @@ Return
                 360Controller.Buttons.A.SetState(false)
                 PreciseSleep(100)
             }
-            return true
+            Return true
         }
-        return false ; 5 fuckups in a row and it fails
+        Return false ; 5 fuckups in a row and it fails
     }
 ; =================================== ;
 
@@ -2075,7 +2078,7 @@ Return
                 break
             }
         }
-        return
+        Return
     }
 
     set_fireteam_privacy(choice="invite",mode:=0) ; sets fireteam privacy :D
@@ -2181,7 +2184,7 @@ Return
             PreciseSleep(100)
             360Controller.Buttons.Start.SetState(False)
         }
-        return
+        Return
     }
 
     game_restart() ; not used in this script but could be added to allwo it to run through crashes :partying_face:
@@ -2212,7 +2215,7 @@ Return
         d2_click(900, 374, 0)
         PreciseSleep(100)
         d2_click(900, 374)
-        return
+        Return
     }
 
     wait_for_spawn(time_out:=200000) ; waits for spawn in by checking for heavy ammo color and blue blip on minimap
@@ -2235,30 +2238,30 @@ Return
                         yref := 667 + y_off
                         coords1 := xref "|" yref "|2|2" 
                         if((TO_color_check(coords1,0xFF9AC1) > .3) && (TO_color_check(coords1,0xFF99C2) < .3)) ; heavy ammo
-                            return true ; This subsequent check prevents some planets from throwing false positive
+                            Return true ; This subsequent check prevents some planets from throwing false positive
                     }
                     PreciseSleep(10)
                     xref := 85 + x_off
                     yref := 84 + y_off
                     coords1 := xref "|" yref "|2|2" 
                     if(TO_color_check(coords1,0xCB986F) > .3) ; minimap
-                        return true
+                        Return true
                     PreciseSleep(10)
                     xref := 387 + x_off
                     yref := 667 + y_off
                     coords1 := xref "|" yref "|2|2" 
 
                     if((TO_color_check(coords1,0xFF9AC1) > .3) && (TO_color_check(coords1,0xFF99C2) < .3)) ; heavy ammo
-                        return true ; This subsequent check prevents some planets from throwing false positive
+                        Return true ; This subsequent check prevents some planets from throwing false positive
                     PreciseSleep(10)
                     y_off := y_off + 2
                 }
                 x_off := x_off + 1
             }
             if (A_TickCount - start_time > time_out) ; times out eventually so we dont get stuck forever
-                return false
+                Return false
         }
-        return true
+        Return true
     }
 ; =================================== ;
 
@@ -2365,7 +2368,7 @@ Return
         }
         %dGdip_DisposeImage%(pBitmap)
         pWhite := white/total
-        return pWhite
+        Return pWhite
     }
 
     exact_color_check(coords, w, h, base_color) ; also bad function to check for specific color pixels in a given area
@@ -2397,7 +2400,7 @@ Return
         }
         %dGdip_DisposeImage%(pBitmap)
         pWhite := white/total
-        return pWhite
+        Return pWhite
 
     }
 
@@ -2452,7 +2455,7 @@ Return
         }
         Gdip_DisposeImage(pElementBitmap)
         pWhite := white/total
-        return pWhite
+        Return pWhite
     }
 
     check_pixel( allowed_colors, pixel_x, pixel_y )
@@ -2471,7 +2474,7 @@ Return
         if (DEBUG)
             draw_crosshair(pixel_x, pixel_y)
 
-        return found
+        Return found
     }
 
 
@@ -2512,7 +2515,7 @@ Return
         DESTINY_Y := Y + TitleBarHeight
         DESTINY_WIDTH := ClientWidth
         DESTINY_HEIGHT := ClientHeight
-        return
+        Return
     }
 
     get_mouse_pos_relative_to_d2() ; gets the mouse coords in x, y form relative to destinys client area
@@ -2525,13 +2528,13 @@ Return
         relativeY := mouseY - DESTINY_Y
 
         Clipboard := relativeX ", " relativeY
-        return {X: relativeX, Y: relativeY}
+        Return {X: relativeX, Y: relativeY}
     }
 
     d2_click(x, y, press_button:=1) ; click somewhere on d2
     {
         Click, % DESTINY_X + x " " DESTINY_Y + y " " press_button
-        return
+        Return
     }
 
     format_timestamp(timestamp, show_hours, show_minutes, show_seconds, show_ms, round_ms:=2) ; just like, dont ask, its shit
@@ -2570,29 +2573,29 @@ Return
         if (show_ms) 
             formattedTime .= SubStr(Format("{:03}", numMS), 1, round_ms)
 
-        return formattedTime
+        Return formattedTime
     }
 
     get_d2_keybinds(k) ; very readable function that parses destiny 2 cvars file for keybinds
     {
         FileRead, f, % A_AppData "\Bungie\DestinyPC\prefs\cvars.xml"
         if ErrorLevel 
-            return False
+            Return False
         b := {}, t := {"shift": "LShift", "control": "LCtrl", "alt": "LAlt", "menu": "AppsKey", "insert": "Ins", "delete": "Del", "pageup": "PgUp", "pagedown": "PgDn", "keypad`/": "NumpadDiv", "keypad`*": "NumpadMult", "keypad`-": "NumpadSub", "keypad`+": "NumpadAdd", "keypadenter": "NumpadEnter", "leftmousebutton": "LButton", "middlemousebutton": "MButton", "rightmousebutton": "RButton", "extramousebutton1": "XButton1", "extramousebutton2": "XButton2", "mousewheelup": "WheelUp", "mousewheeldown": "WheelDown", "escape": "Esc"}
         for _, n in k 
             RegExMatch(f, "<cvar\s+name=""`" n `"""\s+value=""([^""]+)""", m) ? b[n] := t.HasKey(k2 := StrReplace((k1 := StrSplit(m1, "!")[1]) != "unused" ? k1 : k1[2], " ", "")) ? t[k2] : k2 : b[n] := "unused"
-        return b
+        Return b
     }
 
     IsAdminProcess(pid)
     {
         hProcess := DllCall("OpenProcess", "UInt", 0x1000, "Int", False, "UInt", pid, "Ptr")
         if (!hProcess)
-            return False
+            Return False
         if !DllCall("Advapi32.dll\OpenProcessToken", "Ptr", hProcess, "UInt", 0x0008, "PtrP", hToken)
         {
             DllCall("CloseHandle", "Ptr", hProcess)
-            return False
+            Return False
         }
         VarSetCapacity(TOKEN_ELEVATION, 4, 0)
         cbSize := 4
@@ -2600,18 +2603,18 @@ Return
         {
             DllCall("CloseHandle", "Ptr", hToken)
             DllCall("CloseHandle", "Ptr", hProcess)
-            return False
+            Return False
         }
         DllCall("CloseHandle", "Ptr", hToken)
         DllCall("CloseHandle", "Ptr", hProcess)
-        return NumGet(TOKEN_ELEVATION, 0) != 0
+        Return NumGet(TOKEN_ELEVATION, 0) != 0
     }
 
     release_d2_bindings()
     {
         for key, value in key_binds 
             send, % "{" value " Up}"
-        return
+        Return
     }
 ; =================================== ;
 
@@ -2644,7 +2647,7 @@ Return
         ; Release the device context
         DllCall("ReleaseDC", "Ptr", 0, "Ptr", hdc)
         
-        return
+        Return
     }
 
     get_screenshot(filename:="destiny_screenshot",mode:=0) ; save screenshot for DEBUG
@@ -2756,7 +2759,7 @@ Return
             GUI_VISIBLE := false
         }
         
-        return
+        Return
     }
 
     update_ui() ; Fully update UI, optimized to only compute values once.
@@ -2854,7 +2857,7 @@ Return
             if (GUI_VISIBLE)
                 toggle_gui("hide")
         }
-        return
+        Return
     }
 ; =================================== ;
 
@@ -2868,7 +2871,7 @@ Return
             else
                 dropdown .= option "|"
         }
-        return dropdown
+        Return dropdown
     }
 
     ; Popup Dialog
@@ -2903,7 +2906,7 @@ Return
         }
         else
             Gui, user_input: Show
-    return
+    Return
 
     ; Handle ClassChoice change
     ClassChoiceChanged:
@@ -2918,7 +2921,7 @@ Return
         GuiControl,, AachenChoice, % "|" aachenDropdown
         total_time_afk_ui.update_content("Time AFK - " format_timestamp(compute_total_stat("time"), true, true, true, false))
         update_ui()
-    return
+    Return
 
     ; Handle OK button click
     user_input_OK:
@@ -2932,7 +2935,7 @@ Return
         SetTimer, check_tabbed_out, 1000
         Gui, user_input: Destroy
         write_ini()
-    return
+    Return
 
     TotalModeChanged:
         Gui, user_input: Submit, NoHide
@@ -2944,10 +2947,10 @@ Return
         label_total.update_content("Total AFK Stats (" . (TOTALS_DISPLAY = "All" ? "All" : CURRENT_GUARDIAN) . "):")
         total_time_afk_ui.update_content("Time AFK - " format_timestamp(compute_total_stat("time"), true, true, true, false))
         update_ui()
-    return
+    Return
     
     ; Exit script when GUI is closed
     GuiClose:
         Gui, user_input: Destroy
-    return
+    Return
 ; =================================== ;
