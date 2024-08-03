@@ -1,2 +1,6 @@
 *
 !.gitignore
+!Screenshots
+!Screenshots\ColorChecks
+!Screenshots\Detections
+!Screenshots\Looting
