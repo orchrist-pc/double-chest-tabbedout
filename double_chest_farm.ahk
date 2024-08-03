@@ -2,7 +2,7 @@
 ; For support, help or other various macro related queries visit our discord at
 ; https://thrallway.com
 ;##############################################################
-global VERSION := "3.0.0-alpha.1"
+global VERSION := "3.0.0-alpha.2"
 ;##############################################################
 ; 
 ; MASSIVE Shoutout to @a2tc for  the original brainception of the Double Chest Macro
@@ -34,8 +34,11 @@ global VERSION := "3.0.0-alpha.1"
 ; Special Thanks to @.zovc for helping on the OG version of tabbed out single chest macro
 ; 
 ;##############################################################
-global DEBUG := False
+global DEBUG := False               ; Enables logging of all failures
+global DEBUG_VERBOSE := False       ; Enables logging of all failures and successes
+global DEBUG_SCREENSHOTS := False   ; Enables saving screenshots for debugging purposes
 global db_logfile := A_ScriptDir . "\debugs\AFKDoubleChest.log"
+global db_folder := A_ScriptDir . "\debugs\"
 ;##############################################################
 
 #Requires AutoHotkey >=1.1.36 <1.2
@@ -182,9 +185,10 @@ OnExit("on_script_exit")
     WinSet, Transparent, 255, ahk_id %ExtraInfoBGGUI%
 
     ; label text (wont change ever)
-    label_version := new Overlay("label_version", "v" . VERSION, -340, 4, 4, 10, False, 0xFFFFFF)
+    global label_version := new Overlay("label_version", "v" . VERSION, -340, 4, 4, 10, False, 0xFFFFFF)
     label_current := new Overlay("label_current", "Current Session Stats:", -340, 60, 1, 14, False, 0xFFFFFF)
     label_total := new Overlay("label_total", "Total AFK Stats (" . (TOTALS_DISPLAY = "All" ? "All" : CURRENT_GUARDIAN) . "):", -340, 425, 1, 14, False, 0xFFFFFF)
+    label_togglegui_hotkey := new Overlay("label_togglegui_hotkey", "F10: Toggle GUI", -190, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
     label_start_hotkey := new Overlay("label_start_hotkey", "F3: Start", 10, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
     label_stop_hotkey := new Overlay("label_stop_hotkey", "F4: Reload", 130, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
     label_close_hotkey := new Overlay("label_close_hotkey", "F5: Close", 275, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
@@ -215,15 +219,12 @@ OnExit("on_script_exit")
     global total_chest_counters1 := new Overlay("total_chest_counters1", "21:[---/---]  20:[---/---]  17:[---/---]", -340, 665, 4, 10, False, 0xFFFFFF) 
     global total_chest_counters2 := new Overlay("total_chest_counters2", "19:[---/---]  18:[---/---]  16:[---/---]", -340, 685, 4, 10, False, 0xFFFFFF) 
 
-    global overlay_elements := [label_version, label_total, label_current, label_start_hotkey, label_stop_hotkey, label_close_hotkey, label_center_d2_hotkey, label_startTO_hotkey, info_ui, runs_till_orbit_ui, current_class, current_time_afk_ui, current_runs_ui, current_chests_ui, current_exotics_ui, current_exotic_drop_rate_ui, current_average_loop_time_ui, current_missed_chests_percent_ui, current_chest_counters1, current_chest_counters2, total_time_afk_ui, total_runs_ui, total_chests_ui, total_exotics_ui, total_exotic_drop_rate_ui, total_average_loop_time_ui, total_missed_chests_percent_ui, total_chest_counters1, total_chest_counters2]
+    global overlay_elements := [label_version, label_total, label_current, label_togglegui_hotkey, label_start_hotkey, label_stop_hotkey, label_close_hotkey, label_center_d2_hotkey, label_startTO_hotkey, info_ui, runs_till_orbit_ui, current_class, current_time_afk_ui, current_runs_ui, current_chests_ui, current_exotics_ui, current_exotic_drop_rate_ui, current_average_loop_time_ui, current_missed_chests_percent_ui, current_chest_counters1, current_chest_counters2, total_time_afk_ui, total_runs_ui, total_chests_ui, total_exotics_ui, total_exotic_drop_rate_ui, total_average_loop_time_ui, total_missed_chests_percent_ui, total_chest_counters1, total_chest_counters2]
 
     toggle_gui("show")
 
     total_time_afk_ui.update_content("Time AFK - " format_timestamp(compute_total_stat("time"), true, true, true, false))
     update_ui()
-; =================================== ;
-
-
 ; =================================== ;
 
 ; Keybind loading
@@ -260,9 +261,9 @@ OnExit("on_script_exit")
 
 ;WinActivate, Destiny 2
 
-gosub, settingsgui
-
 global STARTUP_SUCCESSFUL := true
+
+gosub, settingsgui
 
 Return
 
@@ -277,21 +278,57 @@ Return
             gosub, tabbedin
     }
 
-
-    F4:: ; reload the script, release any possible held keys, save stats
-    {
+    F4::  ; reload the script, release any possible held keys, save stats
+    {        
+        if(ENABLE_TABBEDOUT)
+        {
+            360Controller.Buttons.A.SetState(false)
+            360Controller.Buttons.RS.SetState(false)
+            360Controller.Buttons.LS.SetState(false)
+            360Controller.Buttons.Y.SetState(false)
+            360Controller.Buttons.X.SetState(false)
+            360Controller.Axes.LX.SetState(50)
+            360Controller.Axes.LY.SetState(50)
+            360Controller.Axes.RX.SetState(50)
+            360Controller.Axes.RY.SetState(50)
+            360Controller.Axes.LT.SetState(0)
+            360Controller.Dpad.SetState("None")
+        }
+        else
+        {
+            for key, value in key_binds 
+                send, % "{" value " Up}"
+        }
         Reload
         Return
     }
 
-    F5:: ; same thing but close the script
+    F5::  ; same thing but close the script
     {
-        for key, value in key_binds 
-            send, % "{" value " Up}"
+        if(ENABLE_TABBEDOUT)
+        {
+            360Controller.Buttons.A.SetState(false)
+            360Controller.Buttons.RS.SetState(false)
+            360Controller.Buttons.LS.SetState(false)
+            360Controller.Buttons.Y.SetState(false)
+            360Controller.Buttons.X.SetState(false)
+            360Controller.Axes.LX.SetState(50)
+            360Controller.Axes.LY.SetState(50)
+            360Controller.Axes.RX.SetState(50)
+            360Controller.Axes.RY.SetState(50)
+            360Controller.Axes.LT.SetState(0)
+            360Controller.Dpad.SetState("None")
+        }
+        else
+        {
+            for key, value in key_binds 
+                send, % "{" value " Up}"
+        }
         ExitApp
+        Return
     }
 
-    F6::
+    F6::  ; Center the Destiny Window
     {
         WinGetPos,,, Width, Height, ahk_exe destiny2.exe
         WinMove, ahk_exe destiny2.exe,, (A_ScreenWidth/2)-((Width-(350 * dpiInverse))/2), (A_ScreenHeight/2)-(Height/2)
@@ -301,8 +338,9 @@ Return
         Return
     }
 
-    F9::
+    F9::  ; Open the settings menu
     {
+        read_ini()
         if (winexist("user_input")) {
             gui user_input: show
         } else {
@@ -312,11 +350,10 @@ Return
         Return
     }
 
-    F10::
+    F10:: ; Toggle the GUI
     {
-        360Controller := ""
-        MsgBox, Check Device Manager
-        Return
+        gosub, toggle_gui_manual
+        return
     }
 
 Return
@@ -334,8 +371,8 @@ Return
         DetectHiddenWindows, On
         WinGet, MainPID, PID, %A_ScriptFullPath% - AutoHotkey v
         ; Start the child scripts
-        Run, %A_AhkPath% "./_Libraries/monitor_loot.ahk" %MainPID% "chest", , , CHEST_PID
-        Run, %A_AhkPath% "./_Libraries/monitor_loot.ahk" %MainPID% "exotic", , , EXOTIC_PID
+        Run, %A_AhkPath% "./_Libraries/monitor_loot.ahk" %MainPID% "chest" %db_folder%, , , CHEST_PID
+        Run, %A_AhkPath% "./_Libraries/monitor_loot.ahk" %MainPID% "exotic" %db_folder%, , , EXOTIC_PID
         
         HEARTBEAT_ON := true
         send_heartbeat()
@@ -483,10 +520,9 @@ Return
         WinGet, MainPID, PID, %A_ScriptFullPath% - AutoHotkey
         ; Start the child scripts
     
-        Run, %A_AhkPath% "./_Libraries/monitor_loot.ahk" %MainPID% "chest", , Min , CHEST_PID
-        Run, %A_AhkPath% "./_Libraries/monitor_loot.ahk" %MainPID% "exotic", , Min , EXOTIC_PID
+        Run, %A_AhkPath% "./_Libraries/monitor_loot.ahk" %MainPID% "chest" %db_folder%, , , CHEST_PID
+        Run, %A_AhkPath% "./_Libraries/monitor_loot.ahk" %MainPID% "exotic" %db_folder%, , , EXOTIC_PID
         
-
         HEARTBEAT_ON := true
         send_heartbeat()
         info_ui.update_content("Starting chest farm")
@@ -494,14 +530,18 @@ Return
         PreciseSleep(1000)
         change_character("",1)
         PreciseSleep(500)
+
         loop, ; loop until we actually load in lol
         {
-            if (orbit_landing(1))
+            if(orbit_landing(1))
                 break
             PreciseSleep(500)
+            if(DEBUG)
+                FileAppend, INFO - Reloading character after failed launch from orbit`n, %db_logfile%
             change_character("",1)
             PreciseSleep(500)
         }
+
         loop_successful := false
         CURRENT_LOOP_START_TIME := A_TickCount
         current_time_afk_ui.toggle_timer("start")
@@ -509,7 +549,8 @@ Return
         total_time_afk_ui.toggle_timer("start")
         total_time_afk_ui.add_time(compute_total_stat("time"), false)
         info_ui.update_content("Loading in")
-        PreciseSleep(15000)
+        
+        PreciseSleep(10000)
 
         loop, ; Orbit loop
         {
@@ -521,17 +562,21 @@ Return
             {
                 if (loop_successful) ; Reset the time only if the loop made it to the end.
                 {
+                    if(DEBUG_VERBOSE)
+                        FileAppend, INFO - Run finished, resetting loop timer`n, %db_logfile%
                     CURRENT_LOOP_START_TIME := A_TickCount
                     loop_successful := false
                 }
-                info_ui.update_content("Waiting for Loadin")
+                info_ui.update_content("Waiting for Load-in")
                 if (!wait_for_spawn(45000)) ; if we dont spawn in, change character and try again
                 {
+                    if(DEBUG)
+                        FileAppend, ATTENTION - Did not succesfully detect load into the landing`n, %db_logfile%
                     info_ui.update_content("Didn't detect spawn in :(")
                     PreciseSleep(5000)
                     break
                 }
-                info_ui.update_content("Waiting for chest spawns")
+                info_ui.update_content("Forcing chest 21 spawn")
                 PreciseSleep(1000)
                 if (PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Aachen"] == "Kinetic")
                     controller_sniper()
@@ -540,10 +585,13 @@ Return
 
                 PreciseSleep(500)
                 TO_force_chest() ; go to first corner and get chest spawns
+                info_ui.update_content("Waiting for chest spawns")
                 PreciseSleep(3000)
 
                 if (!TO_find_chest21()) ; if no first chest we relaunch
                 {
+                    if(DEBUG)
+                        FileAppend, ATTENTION - Unable to locate Chest 21 reloading the landing`n, %db_logfile%
                     reload_landing(1)
                     update_ui()
                     continue
@@ -557,9 +605,10 @@ Return
                     remaining_chests--
                 }
                 update_chest_ui()
-
+                
+                info_ui.update_content("Looking for group 4 chest")
                 G4Chest := TO_find_g4_chests()
-                if(G4Chest) ; open the second chest (one from group 4)
+                if(G4Chest) ; open the second chest (from group 4)
                 {
                     info_ui.update_content("Going to chest " G4Chest)
                     log_chest("appearance", G4Chest)
@@ -572,10 +621,13 @@ Return
                     update_chest_ui()
                 }
 
-                
                 StopMonitoring(EXOTIC_PID)
                 if (EXOTIC_DROP)
+                {
+                    if(DEBUG_VERBOSE)
+                        FileAppend, EXOTIC - Exotic Drop Detected`n, %db_logfile%
                     PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_exotics"]++
+                }
                 EXOTIC_DROP := false
                 
                 ; Run completion
@@ -595,12 +647,14 @@ Return
                     info_ui.update_content("Relaunching Landing")
                     reload_landing(1)
                 }
-
                 send_heartbeat()
-                
                 ; Also break out if runs = 20 as fallback for not tracking chests
                 if (remaining_runs <= 0)
+                {
+                    if(DEBUG_VERBOSE)
+                        FileAppend, INFO - Reached maximum runs - going to orbit`n, %db_logfile%
                     break
+                }
             }
             info_ui.update_content("Orbit and relaunch") ; opened 40 chests, time to orbit and relaunch
             change_character("",1)
@@ -775,7 +829,6 @@ Return
         StartMonitoring(CHEST_PID)
         StartMonitoring(EXOTIC_PID)
         PreciseSleep(1000)
-        get_screenshot("21_tabbedin")
         Send, % "{" key_binds["interact"] " Down}"
         PreciseSleep(1100)
         Send, % "{" key_binds["interact"] " Up}"
@@ -1094,26 +1147,14 @@ Return
     }
 ; =================================== ;
 
-; Tabbed Out Functions
+; Tabbed Out Chest Functions
 ; =================================== ;
 
     TO_force_chest()
     {
-        360Controller.Buttons.RS.SetState(True)     ; 
-        PreciseSleep(50)                            ; 
-        360Controller.Buttons.RS.SetState(False)    ; THIS IS ALL TO PREVENT BUNGIE FROM
-        PreciseSleep(50)                            ; EATING OUR INPUTS AT THE START
-        360Controller.Buttons.RS.SetState(True)     ; FUCK THIS JANK SHIT
-        PreciseSleep(50)                            ; FUCK MY LIFE
-        360Controller.Buttons.RS.SetState(False)    ; 
-        PreciseSleep(50)                            ; 
-
-        ;360Controller.Buttons.Y.SetState(True)
-        ;PreciseSleep(200)
-        ;360Controller.Buttons.Y.SetState(false)
-        ;360Controller.Buttons.Y.SetState(True)
-        ;PreciseSleep(50)
-        ;360Controller.Buttons.Y.SetState(False)
+        if(DEBUG_VERBOSE)
+            FileAppend, INFO - Running into pavilion to force chest 21`n, %db_logfile%
+        anti_bungie_fuckassery()
         controller_aim_hor(20,1200)                 ; aim left towards pavilion
         controller_sprint(7300)                     ; run to the pavilion
         PreciseSleep(10)
@@ -1132,14 +1173,30 @@ Return
         360Controller.Axes.LT.SetState(100)
         while(not chest_found)
         {
-            if(TO_color_check("1198|357|25|25",0xFFFFFF) > 0.12)
+            if(TO_color_check("1198|357|25|25",0xFFFFFF,"Chest21") > 0.12)
             {
+                if(DEBUG_VERBOSE)
+                {
+                    FileAppend, SUCCESS - Found Chest 21`n,%db_logfile%
+                    if(DEBUG_SCREENSHOTS)
+                    {
+                        filename := "Chest_Detection\21_" . CURRENT_GUARDIAN . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
+                        get_screenshot(filename,1)
+                    }
+                }
                 chest_found := true
                 360Controller.Axes.LT.SetState(0)
                 Return true
             }
             if(A_TickCount - timer_start > 20000)
+            {                
+                if(DEBUG_SCREENSHOTS)
+                {
+                    filename := "Chest_Detection\21FAIL_" . CURRENT_GUARDIAN . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
+                    get_screenshot(filename,1)
+                }
                 break
+            }
         }
         360Controller.Axes.LT.SetState(0)
         Return false
@@ -1150,22 +1207,16 @@ Return
         chest_21_opened := false
         CHEST_OPENED := false
 
-        controller_move_ver(0,100)                  ; Side Step out of the Pavilion
-        controller_move_hor(100,300)                ; 
-        controller_aim_hor(90,450)                 ; Aim Towards Chest 21
-
-        controller_sprint(5000)
-
-        controller_aim_hor(10,485)                 ; Aim towards Chest 21
-
-        controller_sprint(4600)
-
-        controller_aim_hor(10,1700)                 ; Turn around to jam into corner
-        
-        controller_sprint(2100)
-
-        controller_aim_hor(10,1000)                 ; Aim left towards chest to loot
-        controller_aim_ver(10,500)                  ; Aim down at chest to loot
+        controller_move_ver(0,100)          ; 
+        controller_move_hor(100,300)        ; Side Step out of the Pavilion
+        controller_aim_hor(90,450)          ; Aim Towards Chest 21
+        controller_sprint(5000)             ; Run forward
+        controller_aim_hor(10,485)          ; Aim towards Chest 21 again
+        controller_sprint(4600)             ; Run forward again
+        controller_aim_hor(10,1700)         ; Turn around to jam into corner
+        controller_sprint(2100)             ;
+        controller_aim_hor(10,1000)         ; Aim left towards chest to loot
+        controller_aim_ver(10,500)          ; Aim down at chest to loot
         
         StartMonitoring(CHEST_PID)
         StartMonitoring(EXOTIC_PID)
@@ -1177,13 +1228,26 @@ Return
         PreciseSleep(50)
         
         if(CHEST_OPENED)
+        {
+            if(DEBUG_VERBOSE)
+                FileAppend, SUCCESS - Looted chest 21`n, %db_logfile%
             chest_21_opened := true
-        else 
+        }
+        else
+        {        
+            if(DEBUG)
+            {
+                FileAppend, ATTENTION - Did not succesfully loot chest 21`n, %db_logfile%
+                if(DEBUG_SCREENSHOTS)
+                {
+                    filename := "Looting\21_" . CURRENT_GUARDIAN . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
+                    get_screenshot(filename,1)
+                }
+            }
             StopMonitoring(CHEST_PID)
+        }
         CHEST_OPENED := False
-
         Return chest_21_opened
-
     }
 
     TO_find_g4_chests()
@@ -1199,6 +1263,8 @@ Return
 
         if((TO_color_check("251|137|29|20",0xFFFFFF,"Chest17") > 0.05) || (TO_color_check("285|125|30|20",0xFFFFFF,"Chest17") > 0.05))
         {
+            if(DEBUG_VERBOSE)
+                FileAppend, INFO - Chest 17 located`n, %db_logfile%
             chest_found := 17
             360Controller.Axes.LT.SetState(0)
             PreciseSleep(1000)
@@ -1210,12 +1276,14 @@ Return
 
         360Controller.Axes.LT.SetState(100)
 
-        while(chest_found == 16)    ; loop until a chest that isn't chest 16 is found (or 5 seconds passes)
+        while(chest_found == 16)
         {
             loop, 5
             {
                 if((TO_color_check("245|105|100|50|0.01",0xFFFFFF,"Chest19") > 0.01) || (TO_color_check("340|100|30|20|0.05",0xFFFFFF,"Chest19") > 0.01))
                 {
+                    if(DEBUG_VERBOSE)
+                        FileAppend, INFO - Chest 19 located`n, %db_logfile%
                     chest_found := 19
                     360Controller.Axes.LT.SetState(0)
                     PreciseSleep(1000)
@@ -1229,9 +1297,6 @@ Return
                 break
         }
         timer_start := A_TickCount
-
-        filename := "\ADS\ADS1_" . count
-        get_screenshot(filename)
 
         360Controller.Axes.LT.SetState(0)
         PreciseSleep(1000)
@@ -1257,6 +1322,8 @@ Return
                 if(TO_color_check(coords,0xFFFFFF,filename) > r)
                 {
                     chest_found := g4_chest[A_Index]
+                    if(DEBUG_VERBOSE)
+                        FileAppend, INFO - Chest %chest_found% located`n, %db_logfile%
                     360Controller.Axes.LT.SetState(0)
                     Return chest_found
                 }
@@ -1264,7 +1331,9 @@ Return
             if(A_TickCount - timer_start > 4000)
                 break
         }
-
+        
+        if(DEBUG_VERBOSE)
+            FileAppend, INFO - No chests found | Defaulting to Chest 16`n, %db_logfile%
         360Controller.Axes.LT.SetState(0)
         Return chest_found
     }
@@ -1273,8 +1342,6 @@ Return
     {
         g4_chest_opened := false
         CHEST_OPENED := false
-        if(chest != 19)
-            chest := 19
 
         360Controller.Buttons.Y.SetState(True)
         controller_move_hor(100,700)
@@ -1383,8 +1450,6 @@ Return
                 360Controller.Axes.LY.SetState(50)
                 controller_aim_hor(85,150)
                 controller_sprint(2300)
-                filename := count . "_ChestLoot_20"
-                get_screenshot(filename)
             }
             else if(CURRENT_GUARDIAN == "Hunter")
             {
@@ -1405,14 +1470,9 @@ Return
                 360Controller.Axes.LY.SetState(50)
                 controller_aim_hor(85,150)
                 controller_sprint(2150)
-                filename := count . "_ChestLoot_20"
-                get_screenshot(filename)
             }
             else
             {
-                controller_sprint(500)
-                controller_move_hor(0,500)
-                controller_aim_hor(90,1550)
                 360Controller.Buttons.A.SetState(True)
                 PreciseSleep(50)
                 360Controller.Buttons.A.SetState(False)
@@ -1428,8 +1488,6 @@ Return
                 360Controller.Axes.LY.SetState(50)
                 controller_aim_hor(85,150)
                 controller_sprint(2300)
-                filename := count . "_ChestLoot_20"
-                get_screenshot(filename)
             }
         }
 
@@ -1457,8 +1515,6 @@ Return
                 controller_sprint(1300)
                 controller_aim_hor(15,900)
                 controller_sprint(1200)
-                filename := count . "_ChestLoot_19"
-                get_screenshot(filename)
             }
             else if(CURRENT_GUARDIAN == "Hunter")
             {
@@ -1474,18 +1530,16 @@ Return
                 360Controller.Buttons.A.SetState(False)
                 PreciseSleep(50)
                 360Controller.Buttons.A.SetState(True)
-                PreciseSleep(500)
+                PreciseSleep(350)
                 360Controller.Buttons.A.SetState(False)
                 PreciseSleep(50)
                 360Controller.Axes.LY.SetState(50)
                 PreciseSleep(50)
                 360Controller.Buttons.LS.SetState(False)
                 controller_aim_hor(85,1200)
-                controller_sprint(1300)
-                controller_aim_hor(15,900)
+                controller_sprint(1500)
+                controller_aim_hor(15,1400)
                 controller_sprint(800)
-                filename := count . "_ChestLoot_19"
-                get_screenshot(filename)
             }
             else
             {
@@ -1506,8 +1560,6 @@ Return
                 controller_sprint(1300)
                 controller_aim_hor(15,900)
                 controller_sprint(1200)
-                filename := count . "_ChestLoot_19"
-                get_screenshot(filename)
             }
         }
 
@@ -1521,22 +1573,29 @@ Return
 
             controller_aim_hor(15,650)
             controller_sprint(4100)
-            filename := count . "_ChestLoot_16"
-            get_screenshot(filename)
         }
 
-        if(chest == 18)
+        else if(chest == 18)
         {   
             controller_sprint(1500)
             controller_aim_hor(15,1700)
             controller_sprint(1800)
             controller_aim_hor(85,1450)
             controller_sprint(5950)
-            filename := count . "_ChestLoot_18"
-            get_screenshot(filename)
         }
 
+        else
+        {
+            if(DEBUG)
+                FileAppend, MAJORFUCKUP - Somehow we started running without a group 4 chest input - who the fuck knows`n, %db_logfile%
+            Return False
+        }
         
+        if(DEBUG_SCREENSHOTS)
+        {
+            filename := "Looting\" . chest . "_" . CURRENT_GUARDIAN . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
+            get_screenshot(filename,1)
+        }
         StartMonitoring(CHEST_PID)
         StartMonitoring(EXOTIC_PID)
         PreciseSleep(500)
@@ -1546,13 +1605,19 @@ Return
         PreciseSleep(50)
         
         if (CHEST_OPENED)
+        {   
+            if(DEBUG_VERBOSE)
+                FileAppend, SUCCESS - Looted chest %chest%`n, %db_logfile%
             g4_chest_opened := true
-        else 
+        }
+        else
+        {
+            if(DEBUG)
+                FileAppend, ATTENTION - Failed to loot chest %chest%`n, %db_logfile%
             StopMonitoring(CHEST_PID)
+        }
         CHEST_OPENED := False
-
         Return g4_chest_opened
-
     }
 
 ; =================================== ;
@@ -1810,7 +1875,7 @@ Return
                 loop, 5
                 {
                     ; check if we are still on the map screen (this means this function fucked up)
-                    percent_white := TO_color_check("920|58|56|7",0xECECEC)
+                    percent_white := TO_color_check("920|58|56|7",0xECECEC,"ReloadLanding")
                     if (percent_white >= 0.3)
                     {
                         controller_move_hor(0,100)
@@ -1819,7 +1884,7 @@ Return
                         360Controller.Buttons.A.SetState(false)
                         PreciseSleep(1000)
                     }
-                    percent_white := TO_color_check("920|58|56|7",0xECECEC)
+                    percent_white := TO_color_check("920|58|56|7",0xECECEC,"ReloadLanding")
                     if (!percent_white >= 0.3) ; we clicked succesfully
                         break
                 }
@@ -1897,7 +1962,7 @@ Return
                 loop, 5
                 {
                     ; check if we are still on the map screen (this means this function fucked up)
-                    percent_white := TO_color_check("46|577|10|10",0xFFFFFF)
+                    percent_white := TO_color_check("46|577|10|10",0xFFFFFF,"OrbitLanding")
                     if (!percent_white >= 0.3)
                     {
                         controller_move_hor(0,100)
@@ -1906,12 +1971,18 @@ Return
                         360Controller.Buttons.A.SetState(false)
                         PreciseSleep(1000)
                     }
-                    percent_white := TO_color_check("46|577|10|10",0xFFFFFF)
+                    percent_white := TO_color_check("46|577|10|10",0xFFFFFF,"OrbitLanding")
                     if (percent_white >= 0.3) ; we clicked succesfully
                         break
                 }
                 if (!percent_white >= 0.3) ; we did not succesfully
-                    break
+                {
+                    360Controller.Buttons.Back.SetState(True)
+                    PreciseSleep(100)
+                    360Controller.Buttons.Back.SetState(False)
+                    PreciseSleep(1500)
+                    continue
+                }
                 controller_move_hor(100,900)
                 controller_move_ver(0,550)
                 360Controller.Buttons.A.SetState(true)
@@ -1919,8 +1990,12 @@ Return
                 360Controller.Buttons.A.SetState(false)
                 PreciseSleep(100)
             }
+            if(DEBUG_VERBOSE)
+                FileAppend, SUCCESS - Launched the landing from orbit`n, %db_logfile%
             Return true
         }
+        if(DEBUG)
+            FileAppend, ATTENTION - Failed to launch the landing from orbit`n, %db_logfile%
         Return false ; 5 fuckups in a row and it fails
     }
 ; =================================== ;
@@ -1932,6 +2007,9 @@ Return
         if (slot = "")
             slot := PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Slot"]
         
+        if(DEBUG_VERBOSE)
+            FileAppend, INFO - Changing character | Slot %slot%`n, %db_logfile%
+
         if(mode == 0)  ;; Defaults to clicking on screen
         {
             if (!key_binds["ui_open_start_menu_settings_tab"]) ; if no settings keybind use f1 :D (slower)
@@ -1959,14 +2037,7 @@ Return
 
         if(mode == 1) ;; Goes to char select with controller inputs
         {
-            360Controller.Buttons.RS.SetState(True)
-            PreciseSleep(50)
-            360Controller.Buttons.RS.SetState(False)
-            PreciseSleep(50)
-            360Controller.Buttons.RS.SetState(True)
-            PreciseSleep(50)
-            360Controller.Buttons.RS.SetState(False)
-            PreciseSleep(50)
+            anti_bungie_fuckassery()
             360Controller.Buttons.Start.SetState(True)
             PreciseSleep(100)
             360Controller.Buttons.Start.SetState(False)
@@ -2004,7 +2075,7 @@ Return
         }
 
         search_start := A_TickCount
-        while (TO_color_check("803|270|42|60",0xFFFFFF) < 0.03)
+        while (TO_color_check("803|270|42|60",0xFFFFFF,"CharacterChangeMenu") < 0.03)
         {
             if (A_TickCount - search_start > 90000)
                 break
@@ -2078,9 +2149,9 @@ Return
         search_start := A_TickCount
         while (true) ; wait for screen to be not black (just checking 3 random pixels)
         {
-            if(((!TO_color_check("50|50|5|5",0x000000)) > .1)
-                || ((!TO_color_check("100|100|5|5",0x000000)) > .1)
-                || ((!TO_color_check("400|400|5|5",0x000000)) > .1)
+            if(((!TO_color_check("50|50|5|5",0x000000,"CharacterChangeSelect")) > .1)
+                || ((!TO_color_check("100|100|5|5",0x000000,"CharacterChangeSelect")) > .1)
+                || ((!TO_color_check("400|400|5|5",0x000000),"CharacterChangeSelect") > .1)
                 || A_TickCount - search_start > 90000)
             {
                 break
@@ -2092,7 +2163,8 @@ Return
     set_fireteam_privacy(choice="invite",mode:=0) ; sets fireteam privacy :D
     {
         StringLower, choice, choice
-
+        if(DEBUG_VERBOSE)
+            FileAppend, INFO - Setting fireteam privacy to %choice%`n, %db_logfile%
         Switch choice {
             case "1", "public", "open":
                 choice := 0
@@ -2143,14 +2215,7 @@ Return
         }
         if(mode == 1)
         {
-            360Controller.Buttons.RS.SetState(True)
-            PreciseSleep(50)
-            360Controller.Buttons.RS.SetState(False)
-            PreciseSleep(50)
-            360Controller.Buttons.RS.SetState(True)
-            PreciseSleep(50)
-            360Controller.Buttons.RS.SetState(False)
-            PreciseSleep(50)
+            anti_bungie_fuckassery()
             360Controller.Buttons.Start.SetState(True)
             PreciseSleep(100)
             360Controller.Buttons.Start.SetState(False)
@@ -2248,34 +2313,49 @@ Return
                     xref := 65 + x_off
                     yref := 60 + y_off
                     coords1 := xref "|" yref "|2|2"
-                    if(TO_color_check(coords1,0xFFFFFF)> .3) ; raid logo
+                    if(TO_color_check(coords1,0xFFFFFF,"Waitforspawn")> .3) ; raid logo
                     {
                         xref := 387 + x_off
                         yref := 667 + y_off
                         coords1 := xref "|" yref "|2|2" 
-                        if((TO_color_check(coords1,0xFF9AC1) > .3) && (TO_color_check(coords1,0xFF99C2) < .3)) ; heavy ammo
+                        if((TO_color_check(coords1,0xFF9AC1,"Waitforspawn_heavy") > .3) && (TO_color_check(coords1,0xFF99C2,"Waitforspawn_heavy") < .3)) ; heavy ammo
+                        {
+                            if(DEBUG_VERBOSE)
+                                FileAppend, INFO - Successfully loaded into the Landing - heavy ammo detected`n, %db_logfile%
                             Return true ; This subsequent check prevents some planets from throwing false positive
+                        }
                     }
                     PreciseSleep(10)
                     xref := 85 + x_off
                     yref := 84 + y_off
                     coords1 := xref "|" yref "|2|2" 
-                    if(TO_color_check(coords1,0xCB986F) > .3) ; minimap
+                    if(TO_color_check(coords1,0xCB986F,"Waitforspawn_map") > .3) ; minimap
+                    {
+                        if(DEBUG_VERBOSE)
+                            FileAppend, INFO - Successfully loaded into the Landing - minimap detected`n, %db_logfile%
                         Return true
+                    }
                     PreciseSleep(10)
                     xref := 387 + x_off
                     yref := 667 + y_off
                     coords1 := xref "|" yref "|2|2" 
-
-                    if((TO_color_check(coords1,0xFF9AC1) > .3) && (TO_color_check(coords1,0xFF99C2) < .3)) ; heavy ammo
+                    if((TO_color_check(coords1,0xFF9AC1,"Waitforspawn_heavy") > .3) && (TO_color_check(coords1,0xFF99C2,"Waitforspawn_heavy") < .3)) ; heavy ammo
+                    {
+                        if(DEBUG_VERBOSE)
+                            FileAppend, INFO - Successfully loaded into the Landing - heavy ammo detected`n, %db_logfile%
                         Return true ; This subsequent check prevents some planets from throwing false positive
+                    }
                     PreciseSleep(10)
                     y_off := y_off + 2
                 }
                 x_off := x_off + 1
             }
             if (A_TickCount - start_time > time_out) ; times out eventually so we dont get stuck forever
+            {
+                if(DEBUG)
+                    FileAppend, ATTENTION - Unable to detect load in to the landing`n, %db_logfile%
                 Return false
+            }
         }
         Return true
     }
@@ -2328,12 +2408,14 @@ Return
 
     controller_sniper(mode:=0)
     {
-        if(!(TO_color_check("385|667|2|2",0xFF9AC1) > .3) && !(TO_color_check("385|667|2|2",0xFF99C2) < .3)) ; heavy ammo
+        anti_bungie_fuckassery()
+        if(!(TO_color_check("385|672|2|2",0xFF9AC1,"WeaponSwap") > .3) && !(TO_color_check("385|672|2|2",0xFF99C2,"WeaponSwap") > .3)) ; heavy ammo
         {
+            PreciseSleep(100)
             360Controller.Buttons.Y.SetState(True)
             PreciseSleep(50)
             360Controller.Buttons.Y.SetState(False)
-            PreciseSleep(500)
+            PreciseSleep(50)
         }
         360Controller.Buttons.Y.SetState(True)
         PreciseSleep(500)
@@ -2350,6 +2432,18 @@ Return
             360Controller.Buttons.Y.SetState(False)
             PreciseSleep(50)
         }
+    }
+
+    anti_bungie_fuckassery()
+    {
+        360Controller.Buttons.RS.SetState(True)     ;
+        PreciseSleep(50)                            ; DESPITE ALL OF MY RAGE
+        360Controller.Buttons.RS.SetState(False)    ; I'M STILL
+        PreciseSleep(50)                            ; JUST
+        360Controller.Buttons.RS.SetState(True)     ; NICHOLAS
+        PreciseSleep(50)                            ; CAGE
+        360Controller.Buttons.RS.SetState(False)    ; (fuck bungo for munching on my inputs)
+        PreciseSleep(50)                            ;
     }
 ; =================================== ;
 
@@ -2422,14 +2516,15 @@ Return
 
     TO_color_check(coords, base_color:=0xFFFFFF,filename:="test") ; also bad function to check for specific color pixels in a given area
     {
+        db_colorlog := db_folder . "ColorDetection.log"
+        count := CURRENT_GUARDIAN . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
         pD2WindowBitmap := Gdip_BitmapFromHWND(D2_WINDOW_HANDLE,clientOnly:=1)
-        if(DEBUG)
-            Gdip_SaveBitmapToFile(pD2WindowBitmap, A_ScriptDir . "\debugs\screenshots\Bigly" . filename . ".png")
+        IF(DEBUG_SCREENSHOTS)
+            Gdip_SaveBitmapToFile(pD2WindowBitmap, A_ScriptDir . "\debugs\Screenshots\ColorChecks\" . count . "_Full_" . filename . ".png")
 
         width := Gdip_GetImageWidth(pD2WindowBitmap)
         height := Gdip_GetImageHeight(pD2WindowBitmap)
 
-        ;FileAppend, color checking`n, %gs_logfile%
         ; convert the coords to be relative to destiny 
         coords := StrSplit(coords, "|")
         x := coords[1]
@@ -2437,7 +2532,6 @@ Return
         w := coords[3]
         h := coords[4]
 
-        ;MsgBox, %cropX% %cropY% %cropWidth% %cropHeight% %width% %height%
         ; Create a new bitmap with the cropped dimensions
         pElementBitmap := Gdip_CreateBitmap(w, h)
         G := Gdip_GraphicsFromImage(pElementBitmap)
@@ -2445,33 +2539,35 @@ Return
 
         Gdip_DisposeImage(pD2WindowBitmap)
         ; save bitmap 
-        if(DEBUG)
-            Gdip_SaveBitmapToFile(pElementBitmap, A_ScriptDir . "\debugs\screenshots\" . filename . ".png")
+        if(DEBUG_SCREENSHOTS)
+            Gdip_SaveBitmapToFile(pElementBitmap, A_ScriptDir . "\debugs\screenshots\ColorChecks\" . count . "_" . filename . ".png")
 
         colx := 0
         coly := 0
-        white := 0
+        match := 0
         total := 0
         if(DEBUG)
-            FileAppend, Color Check Started`n, %db_logfile%
+            FileAppend, INFO - %filename% | Color Check Started | %coords% %base_color%`n, %db_colorlog%
         loop, %h%
         {
             loop, %w%
             {
                 color := (Gdip_GetPixelColor(pElementBitmap, colx, coly, 3))
                 if (color == base_color)
-                    white += 1
+                    match += 1
                 total += 1
                 colx += 1
-                if(DEBUG)
-                    FileAppend, %colx% %coly% | C: %color% Ref: %base_color%`n, %db_logfile%
             }
+            if(DEBUG_VERBOSE)
+                FileAppend, COLORS - %filename% | y:%coly% matches:%match% | C: %color% Ref: %base_color%`n, %db_colorlog%
             colx := 0
             coly += 1
         }
         Gdip_DisposeImage(pElementBitmap)
-        pWhite := white/total
-        Return pWhite
+        pMatch := match/total
+        if(DEBUG)
+            FileAppend, INFO - %filename% | Color Check Finished | %coords% %base_color% | %pMatch%`n, %db_colorlog%
+        Return pMatch
     }
 
     check_pixel( allowed_colors, pixel_x, pixel_y )
@@ -2671,89 +2767,14 @@ Return
         pD2WindowBitmap := Gdip_BitmapFromHWND(D2_WINDOW_HANDLE,clientOnly:=1)
         if(mode == 1)
             pD2WindowBitmap := Gdip_BitmapConvertGray(pD2WindowBitmap)
-        Gdip_SaveBitmapToFile(pD2WindowBitmap, A_ScriptDir . "\debugs\screenshots\" . filename . ".png")
+        Gdip_SaveBitmapToFile(pD2WindowBitmap, A_ScriptDir . "\debugs\Screenshots\" . filename . ".png")
 
         Gdip_DisposeImage(pD2WindowBitmap)
     }
 ; =================================== ;
 
-; GUI Functions
+; Overlay and Stat Functions
 ; =================================== ;
-    read_ini() ; yuck, json would be so much nicer
-    {
-        ; check if there is a file called `afk_chest_stats.ini` and if so, load the stats from it
-        if (FileExist("afk_chest_stats.ini")) {
-
-            IniRead, ENABLE_TABBEDOUT, afk_chest_stats.ini, Settings, enable_tabbedout, %A_Space%
-            IniRead, CURRENT_GUARDIAN, afk_chest_stats.ini, Stats, Last_Guardian, Hunter
-            IniRead, CURRENT_SLOT, afk_chest_stats.ini, % CURRENT_GUARDIAN, Slot, Top
-            IniRead, TOTALS_DISPLAY, afk_chest_stats.ini, Stats, Totals_Display, All
-            IniRead, HIDE_GUI, afk_chest_stats.ini, Settings, hide_gui, %A_Space%
-
-            for _, class_type in CLASSES {
-
-                IniRead, temp, afk_chest_stats.ini, % class_type, Slot, Top
-                PLAYER_DATA[class_type]["Settings"]["Slot"] := temp
-                IniRead, temp, afk_chest_stats.ini, % class_type, Aachen, Kinetic
-                PLAYER_DATA[class_type]["Settings"]["Aachen"] := temp
-
-                for _, class_stat_type in CLASS_STAT_TYPES {
-                    if (InStr(class_stat_type, "total")) {
-                        IniRead, temp, afk_chest_stats.ini, % class_type, % class_stat_type, 0
-                        PLAYER_DATA[class_type]["ClassStats"][class_stat_type] := temp
-                    }
-                }
-
-                for _, chest_id in CHEST_IDS {
-                    for _, chest_stat_type in CHEST_STAT_TYPES {
-                        if (InStr(chest_stat_type, "total"))
-                        {
-                            for _, chest_id in CHEST_IDS {
-                                IniRead, temp, afk_chest_stats.ini, % class_type, % chest_id "_" chest_stat_type, 0
-                                PLAYER_DATA[class_type]["ChestStats"][chest_id][chest_stat_type] := temp
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    write_ini()
-    {
-        if (STARTUP_SUCCESSFUL)
-        {
-            commit_current_stats()
-
-            IniWrite, %ENABLE_TABBEDOUT%, afk_chest_stats.ini, Settings, enable_tabbedout
-            IniWrite, % CURRENT_GUARDIAN, afk_chest_stats.ini, Stats, Last_Guardian
-            IniWrite, % TOTALS_DISPLAY, afk_chest_stats.ini, Stats, Totals_Display
-            IniWrite, %HIDE_GUI%, afk_chest_stats.ini, Settings, hide_gui
-
-            for _, class_type in CLASSES {
-
-                IniWrite, % PLAYER_DATA[class_type]["Settings"]["Slot"], afk_chest_stats.ini, % class_type, Slot
-                IniWrite, % PLAYER_DATA[class_type]["Settings"]["Aachen"], afk_chest_stats.ini, % class_type, Aachen
-
-                for _, class_stat_type in CLASS_STAT_TYPES {
-                    if (InStr(class_stat_type, "total")) {
-                        IniWrite, % PLAYER_DATA[class_type]["ClassStats"][class_stat_type], afk_chest_stats.ini, % class_type, % class_stat_type
-                    }
-                }
-
-                for _, chest_id in CHEST_IDS {
-                    for _, chest_stat_type in CHEST_STAT_TYPES {
-                        if (InStr(chest_stat_type, "total"))
-                        {
-                            for _, chest_id in CHEST_IDS {
-                                IniWrite, % PLAYER_DATA[class_type]["ChestStats"][chest_id][chest_stat_type], afk_chest_stats.ini, % class_type, % chest_id "_" chest_stat_type
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     toggle_gui(visibility := "")
     {
@@ -2865,8 +2886,10 @@ Return
             selection_ui_active := true
         if (destiny_active || selection_ui_active)
         {
-            if (!GUI_VISIBLE)
+            if (!GUI_VISIBLE){
                 toggle_gui("show")
+                WinActivate, ahk_id %D2_WINDOW_HANDLE%
+            }
         }
         else
         {
@@ -2875,6 +2898,98 @@ Return
         }
         Return
     }
+
+    toggle_gui_manual:
+    {
+        toggle_gui()
+        Return
+    }
+    
+    read_ini() ; yuck, json would be so much nicer
+    {
+        if(DEBUG)
+            FileAppend, INFO - INI READ BEGIN | %CURRENT_GUARDIAN%`n, %db_logfile%
+        ; check if there is a file called `double_chest_farm.ini` and if so, load the stats from it
+        if (FileExist("double_chest_farm.ini")) 
+        {
+            IniRead, ENABLE_TABBEDOUT, double_chest_farm.ini, Settings, enable_tabbedout, %A_Space%
+            IniRead, CURRENT_GUARDIAN, double_chest_farm.ini, Stats, Last_Guardian, Hunter
+            IniRead, CURRENT_SLOT, double_chest_farm.ini, % CURRENT_GUARDIAN, Slot, Top
+            IniRead, TOTALS_DISPLAY, double_chest_farm.ini, Stats, Totals_Display, All
+            IniRead, HIDE_GUI, double_chest_farm.ini, Settings, hide_gui, %A_Space%
+
+            for _, class_type in CLASSES {
+
+                IniRead, temp, double_chest_farm.ini, % class_type, Slot, Top
+                PLAYER_DATA[class_type]["Settings"]["Slot"] := temp
+                IniRead, temp, double_chest_farm.ini, % class_type, Aachen, Kinetic
+                PLAYER_DATA[class_type]["Settings"]["Aachen"] := temp
+
+                for _, class_stat_type in CLASS_STAT_TYPES {
+                    if (InStr(class_stat_type, "total")) {
+                        IniRead, temp, double_chest_farm.ini, % class_type, % class_stat_type, 0
+                        PLAYER_DATA[class_type]["ClassStats"][class_stat_type] := temp
+                    }
+                }
+
+                for _, chest_id in CHEST_IDS {
+                    for _, chest_stat_type in CHEST_STAT_TYPES {
+                        if (InStr(chest_stat_type, "total"))
+                        {
+                            for _, chest_id in CHEST_IDS {
+                                IniRead, temp, double_chest_farm.ini, % class_type, % chest_id "_" chest_stat_type, 0
+                                PLAYER_DATA[class_type]["ChestStats"][chest_id][chest_stat_type] := temp
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if(DEBUG)
+            FileAppend, INFO - INI READ END | %CURRENT_GUARDIAN%`n, %db_logfile%
+        return
+    }
+
+    write_ini()
+    {
+        if(DEBUG)
+            FileAppend, INFO - INI WRITE BEGIN | %CURRENT_GUARDIAN%`n, %db_logfile%
+        if (STARTUP_SUCCESSFUL)
+        {
+            commit_current_stats()
+            IniWrite, %ENABLE_TABBEDOUT%, double_chest_farm.ini, Settings, enable_tabbedout
+            IniWrite, %CURRENT_GUARDIAN%, double_chest_farm.ini, Stats, Last_Guardian
+            IniWrite, %TOTALS_DISPLAY%, double_chest_farm.ini, Stats, Totals_Display
+            IniWrite, %HIDE_GUI%, double_chest_farm.ini, Settings, hide_gui
+
+            for _, class_type in CLASSES {
+
+                IniWrite, % PLAYER_DATA[class_type]["Settings"]["Slot"], double_chest_farm.ini, % class_type, Slot
+                IniWrite, % PLAYER_DATA[class_type]["Settings"]["Aachen"], double_chest_farm.ini, % class_type, Aachen
+
+                for _, class_stat_type in CLASS_STAT_TYPES {
+                    if (InStr(class_stat_type, "total")) {
+                        IniWrite, % PLAYER_DATA[class_type]["ClassStats"][class_stat_type], double_chest_farm.ini, % class_type, % class_stat_type
+                    }
+                }
+
+                for _, chest_id in CHEST_IDS {
+                    for _, chest_stat_type in CHEST_STAT_TYPES {
+                        if (InStr(chest_stat_type, "total"))
+                        {
+                            for _, chest_id in CHEST_IDS {
+                                IniWrite, % PLAYER_DATA[class_type]["ChestStats"][chest_id][chest_stat_type], double_chest_farm.ini, % class_type, % chest_id "_" chest_stat_type
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if(DEBUG)
+            FileAppend, INFO - INI WRITE END | %CURRENT_GUARDIAN%`n, %db_logfile%
+        return
+    }
+
 ; =================================== ;
 
 ; Settings Dialog Functions
@@ -2893,28 +3008,64 @@ Return
     ; Popup Dialog
     ; =================================== ;
     settingsgui:
+        if(DEBUG)
+            FileAppend, SETTINGS GUI BEGIN %CURRENT_GUARDIAN%, %db_logfile%
         global INPUT_POPUP_HANDLED := false
+        ClassChoice := CURRENT_GUARDIAN
+        modes := ["Tabbed Out","Standard"]
+        inimode := (ENABLE_TABBEDOUT) ? "Tabbed Out" : "Standard"
         classDropdown := build_dropdown_string(CLASSES, CURRENT_GUARDIAN)
         slotDropdown := build_dropdown_string(CHARACTER_SLOTS, PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Slot"])
         aachenDropdown := build_dropdown_string(AACHEN_CHOICES, PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Aachen"])
+        modeDropdown := build_dropdown_string(modes,inimode)
         ; gui to get users character and character slot on character select screen
-        Gui, user_input: New, , Select class and their slot on the character select screen
+        Gui, user_input: New, , AFK Class Item Farm
         Gui, user_input: +Caption -minimizebox +hWnduser_input_hwnd +AlwaysOnTop
-        Gui, user_input: Add, Checkbox, x10 y+5 checked%ENABLE_TABBEDOUT% venable_tabbedout, Enable Tabbed Out
-        Gui, user_input: Add, Text, y+10, Select Class:
-        Gui, user_input: Add, DropDownList, vClassChoice gClassChoiceChanged, % classDropdown
-        Gui, user_input: Add, Text,, Select Slot:`n(on character select)
-        Gui, user_input: Add, DropDownList, vSlotChoice, % slotDropdown
-        Gui, user_input: Add, Text,, Which Aachen do you have:
-        Gui, user_input: Add, DropDownList, vAachenChoice, % aachenDropdown
-        Gui, user_input: Add, Text,, Totals:
+        
+       ; Main Settings Box
+        Gui, user_input: Font, s12 bold q5 cblack, verdana
+        Gui, user_input: Add, GroupBox, x15 y10 w200 h185, Settings  ; Header
+        
+        Gui, user_input: Font, s11 bold q5 cblack, verdana
+        Gui, user_input: Add, Text, x25 YP+25, Mode:
+        Gui, user_input: Font, s10 norm q5 cblack, verdana  ; reset font to normal
+        Gui, user_input: Add, DropDownList, X+21 YP-2 w110 vModeChoice gModeChoiceChanged, % modeDropdown
+
+        Gui, user_input: Font, s11 bold q5 cblack, verdana
+        Gui, user_input: Add, Text, x25 YP+35, Class:
+        Gui, user_input: Font, s10 norm q5 cblack, verdana  ; reset font to normal
+        Gui, user_input: Add, DropDownList, X+22 YP-2 w110 vClassChoice gClassChoiceChanged, % classDropdown
+        
+        Gui, user_input: Font, s11 bold q5 cblack, verdana
+        Gui, user_input: Add, Text,x25 YP+35, Slot:
+        Gui, user_input: Font, s10 norm q5 cblack, verdana  ; reset font to normal
+        Gui, user_input: Add, DropDownList, X+33 YP-2 w110 vSlotChoice, % slotDropdown
+
+        Gui, user_input: Font, s11 bold q5 cblack, verdana
+        Gui, user_input: Add, Text,x25 YP+35, Aachen:
+        Gui, user_input: Font, s10 norm q5 cblack, verdana  ; reset font to normal
+        Gui, user_input: Add, DropDownList, X+5 YP-2 w110 vAachenChoice, % aachenDropdown
+
+        Gui, user_input: Font, s11 bold q5 cblack, verdana
+        Gui, user_input: Add, Text,x25 YP+35, Totals:
+        Gui, user_input: Font, s10 norm q5 cblack, verdana  ; reset font to normal
+
         Gui, user_input: Add, Radio, x+10 vTotalModeAll gTotalModeChanged, All
         Gui, user_input: Add, Radio, x+10 vTotalModeClass gTotalModeChanged, Class
         GuiControl,, TotalModeAll, % (TOTALS_DISPLAY = "All") ? 1 : 0
         GuiControl,, TotalModeClass, % (TOTALS_DISPLAY = "Class") ? 1 : 0
-        Gui, user_input: Add, Checkbox, x10 y+10 vDebugChoice, Debug
-        Gui, user_input: Add, Checkbox, x+10 yp+0 checked%HIDE_GUI% vhide_gui, Hide GUI
-        Gui, user_input: Add, Button, x10 y+10 guser_input_OK Default, OK
+
+       ; Debugging Options 
+        Gui, user_input: Font, s12 bold q5 cblack, verdana
+        Gui, user_input: Add, GroupBox, x15 yp+30 w200 h80, Debugging  ; Header
+        Gui, user_input: Font, s10 norm q5 cblack, verdana  ; reset font to normal
+
+        Gui, user_input: Add, Checkbox, x25 yp+30 checked%DEBUG% vDEBUG gDebugChoiceChanged, Debug
+        Gui, user_input: Add, Checkbox, x+10 yp+0 checked%DEBUG_VERBOSE% vDEBUG_VERBOSE gDebugChoiceChanged, Verbose
+        Gui, user_input: Add, Checkbox, x25 yp+25 checked%DEBUG_SCREENSHOTS% vDEBUG_SCREENSHOTS gDebugChoiceChanged, Enable Screenshots
+        
+        Gui, user_input: Add, Checkbox, x15 y+20 checked%HIDE_GUI% vhide_gui gHideGUIChanged, Don't Show Again
+        Gui, user_input: Add, Button, x155 yp-5 guser_input_OK Default, Submit
         if(HIDE_GUI)
         {    
             INPUT_POPUP_HANDLED := true
@@ -2922,32 +3073,72 @@ Return
         }
         else
             Gui, user_input: Show
+
+        if(DEBUG)
+            FileAppend, SETTINGS GUI END CG: %CURRENT_GUARDIAN% CC: %ClassChoice%, %db_logfile%
+    Return
+
+    DebugChoiceChanged:
+        Gui, user_input: Submit, NoHide
+        if(DEBUG || DEBUG_SCREENSHOTS || DEBUG_VERBOSE)
+        {
+            tmpfiles := db_folder . "*.log"
+            FileDelete, %tmpfiles%
+            tmpfiles := db_folder . "\Screenshots\Detection\*.png"
+            FileDelete, %tmpfiles%
+            tmpfiles := db_folder . "\Screenshots\Looting\*.png"
+            FileDelete, %tmpfiles%
+            tmpfiles := db_folder . "\Screenshots\ColorChecks\*.png"
+            FileDelete, %tmpfiles%
+
+            label_version.update_content("v" . VERSION . "   |   Debugging Enabled")
+        }
+        else
+            label_version.update_content("v" . VERSION)
+    Return
+
+    HideGUIChanged:
+        Gui, user_input: Submit, NoHide
+        if(hide_gui)
+            HIDE_GUI := 1
+        else
+            HIDE_GUI := 0
+    Return
+
+    ModeChoiceChanged:
+        Gui, user_input: Submit, NoHide
+        if(ModeChoice == "Tabbed Out")
+            ENABLE_TABBEDOUT := 1
+        else if(ModeChoice == "Standard")
+            ENABLE_TABBEDOUT := 0
     Return
 
     ; Handle ClassChoice change
     ClassChoiceChanged:
         Gui, user_input: Submit, NoHide
         CURRENT_GUARDIAN := ClassChoice
-        CURRENT_SLOT := PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Slot"]
-        current_class.update_content("Class - " . CURRENT_GUARDIAN . " | Slot - " CURRENT_SLOT)   
-        label_total.update_content("Total AFK Stats (" . (TOTALS_DISPLAY = "All" ? "All" : CURRENT_GUARDIAN) . "):")
+        if(DEBUG)
+            FileAppend, INFO - Class Choice Changed | CG: %CURRENT_GUARDIAN% CC: %ClassChoice%`n, %db_logfile%
         slotDropdown := build_dropdown_string(CHARACTER_SLOTS, PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Slot"])
         aachenDropdown := build_dropdown_string(AACHEN_CHOICES, PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Aachen"])
         GuiControl,, SlotChoice, % "|" slotDropdown
         GuiControl,, AachenChoice, % "|" aachenDropdown
-        total_time_afk_ui.update_content("Time AFK - " format_timestamp(compute_total_stat("time"), true, true, true, false))
         update_ui()
     Return
 
     ; Handle OK button click
     user_input_OK:
-        Gui, user_input: Submit
+        gui, user_input: Submit, NoHide
+        CG := CURRENT_GUARDIAN
         CURRENT_GUARDIAN := ClassChoice
+        if(DEBUG)
+            FileAppend, INFO - Settings Submitted | CG: %CURRENT_GUARDIAN% CC: %ClassChoice%`n, %db_logfile%
         PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Slot"] := SlotChoice
         PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Aachen"] := AachenChoice
-        DEBUG := DebugChoice
-        WinActivate, ahk_id %D2_WINDOW_HANDLE%
+        current_class.update_content("Class - " . CURRENT_GUARDIAN . " | Slot - " SlotChoice)   
+        label_total.update_content("Total AFK Stats (" . (TOTALS_DISPLAY = "All" ? "All" : CURRENT_GUARDIAN) . "):")
         INPUT_POPUP_HANDLED := true
+        WinActivate, ahk_id %D2_WINDOW_HANDLE%
         SetTimer, check_tabbed_out, 1000
         Gui, user_input: Destroy
         write_ini()

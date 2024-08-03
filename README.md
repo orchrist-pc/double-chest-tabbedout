@@ -26,7 +26,7 @@ Download [Here](https://autohotkey.com/download/1.1/AutoHotkey_1.1.37.02_setup.e
 - **Aim Smoothing**: `Off`
 
   
-![Sensitivity](images/chest_farm_sens.png)
+![Sensitivity](_Libraries/Reference_Images/chest_farm_sens.png)
 
 ### Bindings
 - **Key Binding Storage**: Set to `Computer`
@@ -34,7 +34,7 @@ Download [Here](https://autohotkey.com/download/1.1/AutoHotkey_1.1.37.02_setup.e
 - **Bind Settings Key**: Assign to anything, just needs to be assigned
 
 
-![Bindings](images/All_Keybinds.png)
+![Bindings](_Libraries/Reference_Images/All_Keybinds.png)
 
 ### Display Settings
 - **Window Mode**: Windowed
@@ -47,7 +47,7 @@ Download [Here](https://autohotkey.com/download/1.1/AutoHotkey_1.1.37.02_setup.e
 - You May need to Press W and D to max the screen bounds even if they look already maxed. Hit Enter to save.
 
   
-![Display Settings](images/chest_farm_video_settings.png)
+![Display Settings](_Libraries/Reference_Images/chest_farm_video_settings.png)
 
 ### Visual Settings
 - **HDR**: Disabled
@@ -55,13 +55,13 @@ Download [Here](https://autohotkey.com/download/1.1/AutoHotkey_1.1.37.02_setup.e
 - **Film Grain**: Disabled
 
   
-![Visual Settings](images/chest_farm_additional_video.png)
+![Visual Settings](_Libraries/Reference_Images/chest_farm_additional_video.png)
 - **HUD Opacity**: Set to `Full`
 - **Colorblind Mode**: `Off`
 - **Reticle Location**: `Center`
 
   
-![Visual Settings](images/chest_farm_gameplay.png)
+![Visual Settings](_Libraries/Reference_Images/chest_farm_gameplay.png)
 
 ## Character Requirements
 - **100 Mobility**: Yes, on every class (even warlock)
@@ -72,9 +72,9 @@ Download [Here](https://autohotkey.com/download/1.1/AutoHotkey_1.1.37.02_setup.e
 - **Ghost Mod**: You must equip the `Wombo Detector` ghost mod (alternatively the `Expert Tracker` and `Treasure Hunter` ghost mods will actually work better but are no longer obtainable)
 
   
-![Additional Settings](images/chest_farm_mobi.png)
-![Additional Settings](images/chest_farm_aachen.png)
-![Additional Settings](images/chest_farm_ghost_mod.png)
+![Additional Settings](_Libraries/Reference_Images/chest_farm_mobi.png)
+![Additional Settings](_Libraries/Reference_Images/chest_farm_aachen.png)
+![Additional Settings](_Libraries/Reference_Images/chest_farm_ghost_mod.png)
 
 ## How to Use
 

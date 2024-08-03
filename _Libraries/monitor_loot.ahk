@@ -10,10 +10,11 @@ OnMessage(0x1002, "StopMonitoring")
 ; Get the task from command line arguments
 global main_pid := A_Args[1]
 global task := A_Args[2]
+global ml_logfolder := A_Args[3]
 ;MsgBox, "mainpid: " . %main_pid% . " task: " . %task%
 
-global ml_c_logfile := A_Desktop . "\Chest_Monitor.log"
-global ml_e_logfile := A_Desktop . "\Exotic_Monitor.log"
+global ml_c_logfile := ml_logfolder . "Chest_Monitor.log"
+global ml_e_logfile := ml_logfolder . "Exotic_Monitor.log"
 
 global pToken := -1
 global DESTINY_X := 0
@@ -64,7 +65,8 @@ CheckChestOpen()
     ; WinActivate, Destiny 2
     colors := ["0xFFE4CB", 0xFFE4CB, 0xFFE4CC, 0xFFDECD, 0xFFE5CC, 0xFFE6CC, 0xFFE4CD, 0xFFE7CC, 0xFFE5CB, 0xFFE6CB]
     x := colors.MaxIndex()
-    ; FileAppend, Loot Monitoring | STARTING CHEST DETECTION`n, %ml_c_logfile%
+    if(DEBUG)
+        FileAppend, Loot Monitoring | STARTING CHEST DETECTION`n, %ml_c_logfile%
     loop, %x%
 	{	
         testingfuck := colors[A_Index]
@@ -87,12 +89,14 @@ CheckExoticDrop()
     locations := ["1258|198|20|80","1258|278|20|80","1258|358|20|80","1258|438|20|80"]
     loop, 4
     {
-        ; FileAppend, Loot Monitoring | STARTING EXOTIC DETECTION`n, %ml_e_logfile%
+        if(DEBUG)
+            FileAppend, Loot Monitoring | STARTING EXOTIC DETECTION`n, %ml_e_logfile%
         pct_col1 := exact_color_check(locations[A_Index],0x488DD8,ml_e_logfile)
         pct_col2 := exact_color_check(locations[A_Index],0x48BDD8,ml_e_logfile)
         if (pct_col1 > 0.01 || pct_col2 > 0.01)
         {
-            ; FileAppend, EXOTIC FOUND`n, %ml_e_logfile%
+            if(DEBUG)
+                FileAppend, EXOTIC FOUND`n, %ml_e_logfile%
             PostMessage, 0x1004, 0, 0, , % "ahk_pid " main_pid
             SetTimer, CheckExoticDrop, Off
         }
@@ -143,7 +147,9 @@ exact_color_check(coords,base_color,filename:="test") ; also bad function to che
     width := Gdip_GetImageWidth(pD2WindowBitmap)
     height := Gdip_GetImageHeight(pD2WindowBitmap)
 
-    ; FileAppend, color checking`n, %gs_logfile%
+    
+    if(DEBUG)
+        FileAppend, color checking`n, %gs_logfile%
     ; convert the coords to be relative to destiny 
     coords := StrSplit(coords, "|")
     x := coords[1]
@@ -151,7 +157,6 @@ exact_color_check(coords,base_color,filename:="test") ; also bad function to che
     w := coords[3]
     h := coords[4]
 
-    ;MsgBox, %cropX% %cropY% %cropWidth% %cropHeight% %width% %height%
     ; Create a new bitmap with the cropped dimensions
     pElementBitmap := Gdip_CreateBitmap(w, h)
     G := Gdip_GraphicsFromImage(pElementBitmap)
@@ -173,7 +178,8 @@ exact_color_check(coords,base_color,filename:="test") ; also bad function to che
                 white += 1
             total += 1
             colx += 1
-            ; FileAppend, Color: %color% | Ref: %base_color%`n, %filename%
+            if(DEBUG)           
+                FileAppend, Color: %color% | Ref: %base_color%`n, %filename%
         }
         colx := 0
         coly += 1
