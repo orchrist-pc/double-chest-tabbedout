@@ -20,6 +20,8 @@ global VERSION := "3.0.0-alpha.2"
 ;   - Incredible levels of Patience and help with supporting the users
 ;   - Countless hours of testing and brainstorming
 ;   - Fixing stat tracking when Zen broke it :)
+;   - Literally all of the Titan pathing for tabbed out
+;   - Hours and hours of pathing tweaks and letting me bounce ideas off him
 ;   - <3
 ; Special Thanks to @antrament for:
 ;	- The framework and class files necessary for tabbed out control to work
@@ -355,8 +357,7 @@ Return
         gosub, toggle_gui_manual
         return
     }
-
-Return
+    Return
 ; =================================== ;
 
 ; Main Functions (run the script)
@@ -520,6 +521,7 @@ Return
         WinGet, MainPID, PID, %A_ScriptFullPath% - AutoHotkey
         ; Start the child scripts
     
+
         Run, %A_AhkPath% "./_Libraries/monitor_loot.ahk" %MainPID% "chest" %db_folder%, , , CHEST_PID
         Run, %A_AhkPath% "./_Libraries/monitor_loot.ahk" %MainPID% "exotic" %db_folder%, , , EXOTIC_PID
         
@@ -549,7 +551,8 @@ Return
         total_time_afk_ui.toggle_timer("start")
         total_time_afk_ui.add_time(compute_total_stat("time"), false)
         info_ui.update_content("Loading in")
-        
+    */
+        ;reload_landing(1)
         PreciseSleep(10000)
 
         loop, ; Orbit loop
@@ -1202,54 +1205,6 @@ Return
         Return false
     }
 
-    TO_run_to_chest21()
-    {
-        chest_21_opened := false
-        CHEST_OPENED := false
-
-        controller_move_ver(0,100)          ; 
-        controller_move_hor(100,300)        ; Side Step out of the Pavilion
-        controller_aim_hor(90,450)          ; Aim Towards Chest 21
-        controller_sprint(5000)             ; Run forward
-        controller_aim_hor(10,485)          ; Aim towards Chest 21 again
-        controller_sprint(4600)             ; Run forward again
-        controller_aim_hor(10,1700)         ; Turn around to jam into corner
-        controller_sprint(2100)             ;
-        controller_aim_hor(10,1000)         ; Aim left towards chest to loot
-        controller_aim_ver(10,500)          ; Aim down at chest to loot
-        
-        StartMonitoring(CHEST_PID)
-        StartMonitoring(EXOTIC_PID)
-        PreciseSleep(500)
-
-        360Controller.Buttons.X.SetState(true)
-        PreciseSleep(1300)
-        360Controller.Buttons.X.SetState(false)
-        PreciseSleep(50)
-        
-        if(CHEST_OPENED)
-        {
-            if(DEBUG_VERBOSE)
-                FileAppend, SUCCESS - Looted chest 21`n, %db_logfile%
-            chest_21_opened := true
-        }
-        else
-        {        
-            if(DEBUG)
-            {
-                FileAppend, ATTENTION - Did not succesfully loot chest 21`n, %db_logfile%
-                if(DEBUG_SCREENSHOTS)
-                {
-                    filename := "Looting\21_" . CURRENT_GUARDIAN . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
-                    get_screenshot(filename,1)
-                }
-            }
-            StopMonitoring(CHEST_PID)
-        }
-        CHEST_OPENED := False
-        Return chest_21_opened
-    }
-
     TO_find_g4_chests()
     {
         g4_coords := ["1177|275|25|25|0.05","1040|520|100|60|0.01"]
@@ -1338,10 +1293,60 @@ Return
         Return chest_found
     }
 
+    TO_run_to_chest21()
+    {
+        chest_21_opened := false
+        CHEST_OPENED := false
+
+        controller_move_ver(0,100)          ; 
+        controller_move_hor(100,300)        ; Side Step out of the Pavilion
+        controller_aim_hor(90,450)          ; Aim Towards Chest 21
+        controller_sprint(5000)             ; Run forward
+        controller_aim_hor(10,485)          ; Aim towards Chest 21 again
+        controller_sprint(4600)             ; Run forward again
+        controller_aim_hor(10,1700)         ; Turn around to jam into corner
+        controller_sprint(2100)             ;
+        controller_aim_hor(10,1000)         ; Aim left towards chest to loot
+        controller_aim_ver(10,500)          ; Aim down at chest to loot
+        
+        StartMonitoring(CHEST_PID)
+        StartMonitoring(EXOTIC_PID)
+        PreciseSleep(500)
+
+        360Controller.Buttons.X.SetState(true)
+        PreciseSleep(1300)
+        360Controller.Buttons.X.SetState(false)
+        PreciseSleep(50)
+        
+        if(CHEST_OPENED)
+        {
+            if(DEBUG_VERBOSE)
+                FileAppend, SUCCESS - Looted chest 21`n, %db_logfile%
+            chest_21_opened := true
+        }
+        else
+        {        
+            if(DEBUG)
+            {
+                FileAppend, ATTENTION - Did not succesfully loot chest 21`n, %db_logfile%
+                if(DEBUG_SCREENSHOTS)
+                {
+                    filename := "Looting\21_" . CURRENT_GUARDIAN . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
+                    get_screenshot(filename,1)
+                }
+            }
+            StopMonitoring(CHEST_PID)
+        }
+        CHEST_OPENED := False
+        Return chest_21_opened
+    }
+
     TO_run_to_G4_chest(chest)
     {
         g4_chest_opened := false
         CHEST_OPENED := false
+
+        ;chest = 16
 
         360Controller.Buttons.Y.SetState(True)
         controller_move_hor(100,700)
@@ -1537,8 +1542,8 @@ Return
                 PreciseSleep(50)
                 360Controller.Buttons.LS.SetState(False)
                 controller_aim_hor(85,1200)
-                controller_sprint(1500)
-                controller_aim_hor(15,1400)
+                controller_sprint(1650)
+                controller_aim_hor(15,1300)
                 controller_sprint(800)
             }
             else
@@ -1571,8 +1576,11 @@ Return
             controller_aim_hor(85,1100)
             controller_sprint(4300)
 
-            controller_aim_hor(15,650)
-            controller_sprint(4100)
+            controller_aim_hor(15,500)
+            controller_sprint(7000)
+
+            controller_aim_hor(15,1200)
+            controller_sprint(400)
         }
 
         else if(chest == 18)
@@ -1580,7 +1588,7 @@ Return
             controller_sprint(1500)
             controller_aim_hor(15,1700)
             controller_sprint(1800)
-            controller_aim_hor(85,1450)
+            controller_aim_hor(85,1600)
             controller_sprint(5950)
         }
 
@@ -2519,9 +2527,11 @@ Return
         db_colorlog := db_folder . "ColorDetection.log"
         count := CURRENT_GUARDIAN . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
         pD2WindowBitmap := Gdip_BitmapFromHWND(D2_WINDOW_HANDLE,clientOnly:=1)
-        IF(DEBUG_SCREENSHOTS)
-            Gdip_SaveBitmapToFile(pD2WindowBitmap, A_ScriptDir . "\debugs\Screenshots\ColorChecks\" . count . "_Full_" . filename . ".png")
-
+        IF(DEBUG_VERBOSE)
+        {
+            IF(DEBUG_SCREENSHOTS)
+                Gdip_SaveBitmapToFile(pD2WindowBitmap, A_ScriptDir . "\debugs\Screenshots\ColorChecks\" . count . "_Full_" . filename . ".png")
+        }
         width := Gdip_GetImageWidth(pD2WindowBitmap)
         height := Gdip_GetImageHeight(pD2WindowBitmap)
 
@@ -2539,9 +2549,11 @@ Return
 
         Gdip_DisposeImage(pD2WindowBitmap)
         ; save bitmap 
-        if(DEBUG_SCREENSHOTS)
-            Gdip_SaveBitmapToFile(pElementBitmap, A_ScriptDir . "\debugs\screenshots\ColorChecks\" . count . "_" . filename . ".png")
-
+        IF(DEBUG_VERBOSE)
+        {
+            if(DEBUG_SCREENSHOTS)
+                Gdip_SaveBitmapToFile(pElementBitmap, A_ScriptDir . "\debugs\screenshots\ColorChecks\" . count . "_" . filename . ".png")
+        }
         colx := 0
         coly := 0
         match := 0
