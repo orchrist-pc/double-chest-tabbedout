@@ -36,6 +36,19 @@ Download [Here](https://autohotkey.com/download/1.1/AutoHotkey_1.1.37.02_setup.e
 
 ![Bindings](_Libraries/Reference_Images/All_Keybinds.png)
 
+### Controller Settings
+- **Button Layout**: Reset to Default
+- **Look Sensitivity**: `3`
+- **Sprint-Turn Scale**: `0.4`
+- **Axial Dead Zone**: `0`
+- **Radial Dead Zone**: `0`
+- **Vertical Inversion**: Not Inverted
+- **Horizontal Inversion**: Not Inverted
+- **Autolook Centering**: Off
+
+
+![Controller Settings](_Libraries/Reference_Images/controller_settings.png)
+
 ### Display Settings
 - **Window Mode**: Windowed
 - **Resolution**: `1280 x 720`
@@ -71,7 +84,6 @@ Download [Here](https://autohotkey.com/download/1.1/AutoHotkey_1.1.37.02_setup.e
 - **HEAVY Sword**: You must have a HEAVY sword equipped, does not matter what HEAVY sword.
 - **Ghost Mod**: You must equip the `Wombo Detector` ghost mod (alternatively the `Expert Tracker` and `Treasure Hunter` ghost mods will actually work better but are no longer obtainable)
 
-  
 ![Additional Settings](_Libraries/Reference_Images/chest_farm_mobi.png)
 ![Additional Settings](_Libraries/Reference_Images/chest_farm_aachen.png)
 ![Additional Settings](_Libraries/Reference_Images/chest_farm_ghost_mod.png)
@@ -98,6 +110,9 @@ Download [Here](https://autohotkey.com/download/1.1/AutoHotkey_1.1.37.02_setup.e
      - **Start Macro**: Press `F3`
      - **Stop Macro**: Press `F4`
      - **Close Macro**: Press `F5`
+     - **Center the Window**: Press `F6`
+     - **Open the Settings Menu**: Press `F9`
+     - **Toggle the Overlay On/Off**: Press `F10`
 
 ## Further Help
 For more help or to ask other questions please join the [discord](https://discord.gg/KGyjysA5WY).
