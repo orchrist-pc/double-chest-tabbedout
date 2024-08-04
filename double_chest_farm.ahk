@@ -1492,7 +1492,7 @@ Return
                 360Controller.Buttons.A.SetState(False)
                 360Controller.Axes.LY.SetState(50)
                 controller_aim_hor(85,150)
-                controller_sprint(2300)
+                controller_sprint(2100)
             }
         }
 
@@ -1556,15 +1556,15 @@ Return
                 PreciseSleep(50)
                 360Controller.Buttons.A.SetState(False)
                 360Controller.Axes.LY.SetState(100)
-                PreciseSleep(1800)
+                PreciseSleep(1500)
                 360Controller.Buttons.A.SetState(True)
                 PreciseSleep(50)
                 360Controller.Buttons.A.SetState(False)
                 360Controller.Axes.LY.SetState(50)
                 controller_aim_hor(85,1200)
-                controller_sprint(1300)
-                controller_aim_hor(15,900)
-                controller_sprint(1200)
+                controller_sprint(1350)
+                controller_aim_hor(15,850)
+                controller_sprint(1100)
             }
         }
 
