@@ -2,7 +2,7 @@
 ; For support, help or other various macro related queries visit our discord at
 ; https://thrallway.com
 ;##############################################################
-global VERSION := "3.0.0-alpha.2"
+global VERSION := "3.0.0-alpha.3"
 ;##############################################################
 ; 
 ; MASSIVE Shoutout to @a2tc for  the original brainception of the Double Chest Macro
@@ -36,9 +36,9 @@ global VERSION := "3.0.0-alpha.2"
 ; Special Thanks to @.zovc for helping on the OG version of tabbed out single chest macro
 ; 
 ;##############################################################
-global DEBUG := False               ; Enables logging of all failures
-global DEBUG_VERBOSE := False       ; Enables logging of all failures and successes
-global DEBUG_SCREENSHOTS := False   ; Enables saving screenshots for debugging purposes
+global DEBUG := True               ; Enables logging of all failures
+global DEBUG_VERBOSE := True       ; Enables logging of all failures and successes
+global DEBUG_SCREENSHOTS := True   ; Enables saving screenshots for debugging purposes
 global db_logfile := A_ScriptDir . "\debugs\AFKDoubleChest.log"
 global db_folder := A_ScriptDir . "\debugs\"
 ;##############################################################
@@ -516,18 +516,16 @@ Return
 
         ; Timers during the farm loop cause random interrupts during timing sensitive areas
         SetTimer, check_tabbed_out, Off 
-        
+        toggle_gui("hide")
         DetectHiddenWindows, On
         WinGet, MainPID, PID, %A_ScriptFullPath% - AutoHotkey
-        ; Start the child scripts
-    
+        info_ui.update_content("Starting chest farm")
+        ; Start the child scripts   
 
         Run, %A_AhkPath% "./_Libraries/monitor_loot.ahk" %MainPID% "chest" %db_folder%, , , CHEST_PID
         Run, %A_AhkPath% "./_Libraries/monitor_loot.ahk" %MainPID% "exotic" %db_folder%, , , EXOTIC_PID
         
         HEARTBEAT_ON := true
-        send_heartbeat()
-        info_ui.update_content("Starting chest farm")
         set_fireteam_privacy("closed",1) ;; second value sets to tabbed out mode
         PreciseSleep(1000)
         change_character("",1)
@@ -543,7 +541,7 @@ Return
             change_character("",1)
             PreciseSleep(500)
         }
-
+        */
         loop_successful := false
         CURRENT_LOOP_START_TIME := A_TickCount
         current_time_afk_ui.toggle_timer("start")
@@ -551,8 +549,8 @@ Return
         total_time_afk_ui.toggle_timer("start")
         total_time_afk_ui.add_time(compute_total_stat("time"), false)
         info_ui.update_content("Loading in")
-    */
-        ;reload_landing(1)
+
+        reload_landing(1)
         PreciseSleep(10000)
 
         loop, ; Orbit loop
@@ -580,16 +578,16 @@ Return
                     break
                 }
                 info_ui.update_content("Forcing chest 21 spawn")
-                PreciseSleep(1000)
+                ;PreciseSleep(1000)
                 if (PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Aachen"] == "Kinetic")
                     controller_sniper()
                 else 
                     controller_sniper(1)
 
-                PreciseSleep(500)
+                ;PreciseSleep(500)
                 TO_force_chest() ; go to first corner and get chest spawns
                 info_ui.update_content("Waiting for chest spawns")
-                PreciseSleep(3000)
+                send_heartbeat()
 
                 if (!TO_find_chest21()) ; if no first chest we relaunch
                 {
@@ -649,8 +647,8 @@ Return
                 {
                     info_ui.update_content("Relaunching Landing")
                     reload_landing(1)
+                    send_heartbeat()
                 }
-                send_heartbeat()
                 ; Also break out if runs = 20 as fallback for not tracking chests
                 if (remaining_runs <= 0)
                 {
@@ -1176,14 +1174,14 @@ Return
         360Controller.Axes.LT.SetState(100)
         while(not chest_found)
         {
-            if(TO_color_check("1198|357|25|25",0xFFFFFF,"Chest21") > 0.12)
+            if(TO_color_check("1198|357|25|25",0xFFFFFF,"Detection\Chest21") > 0.12)
             {
                 if(DEBUG_VERBOSE)
                 {
                     FileAppend, SUCCESS - Found Chest 21`n,%db_logfile%
                     if(DEBUG_SCREENSHOTS)
                     {
-                        filename := "Chest_Detection\21_" . CURRENT_GUARDIAN . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
+                        filename := "Detection\21_" . CURRENT_GUARDIAN . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
                         get_screenshot(filename,1)
                     }
                 }
@@ -1195,7 +1193,7 @@ Return
             {                
                 if(DEBUG_SCREENSHOTS)
                 {
-                    filename := "Chest_Detection\21FAIL_" . CURRENT_GUARDIAN . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
+                    filename := "Detection\21FAIL_" . CURRENT_GUARDIAN . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
                     get_screenshot(filename,1)
                 }
                 break
@@ -1216,7 +1214,7 @@ Return
         controller_aim_ver(90,425)      ;; 425
         controller_aim_hor(90,2100)     ;; 2100
 
-        if((TO_color_check("251|137|29|20",0xFFFFFF,"Chest17") > 0.05) || (TO_color_check("285|125|30|20",0xFFFFFF,"Chest17") > 0.05))
+        if((TO_color_check("251|137|29|20",0xFFFFFF,"Detection\Chest17") > 0.05) || (TO_color_check("285|125|30|20",0xFFFFFF,"Detection\Chest17") > 0.05))
         {
             if(DEBUG_VERBOSE)
                 FileAppend, INFO - Chest 17 located`n, %db_logfile%
@@ -1235,7 +1233,7 @@ Return
         {
             loop, 5
             {
-                if((TO_color_check("245|105|100|50|0.01",0xFFFFFF,"Chest19") > 0.01) || (TO_color_check("340|100|30|20|0.05",0xFFFFFF,"Chest19") > 0.01))
+                if((TO_color_check("245|105|100|50|0.01",0xFFFFFF,"Detection\Chest19") > 0.01) || (TO_color_check("340|100|30|20|0.05",0xFFFFFF,"Detection\Chest19") > 0.01))
                 {
                     if(DEBUG_VERBOSE)
                         FileAppend, INFO - Chest 19 located`n, %db_logfile%
@@ -1273,7 +1271,7 @@ Return
                 h := coords[4]
                 r := coords[5]
                 coords := x "|" y "|" w "|" h
-                filename := "Chest" . g4_chest[A_Index]
+                filename := "Detection\Chest" . g4_chest[A_Index]
                 if(TO_color_check(coords,0xFFFFFF,filename) > r)
                 {
                     chest_found := g4_chest[A_Index]
@@ -1305,14 +1303,16 @@ Return
         controller_aim_hor(10,485)          ; Aim towards Chest 21 again
         controller_sprint(4600)             ; Run forward again
         controller_aim_hor(10,1700)         ; Turn around to jam into corner
-        controller_sprint(2100)             ;
+        controller_sprint(1800)             ;
+        controller_move_hor(0,200)
+        controller_sprint(500)
         controller_aim_hor(10,1000)         ; Aim left towards chest to loot
         controller_aim_ver(10,500)          ; Aim down at chest to loot
         
         StartMonitoring(CHEST_PID)
         StartMonitoring(EXOTIC_PID)
         PreciseSleep(500)
-
+ 
         360Controller.Buttons.X.SetState(true)
         PreciseSleep(1300)
         360Controller.Buttons.X.SetState(false)
@@ -1346,7 +1346,7 @@ Return
         g4_chest_opened := false
         CHEST_OPENED := false
 
-        ;chest = 16
+        ;chest = 18
 
         360Controller.Buttons.Y.SetState(True)
         controller_move_hor(100,700)
@@ -1405,7 +1405,7 @@ Return
                 PreciseSleep(500)
                 360Controller.Buttons.LS.SetState(false)
                 360Controller.Axes.LY.SetState(50)
-                PreciseSleep(1000)
+                PreciseSleep(500)
                 controller_aim_hor(15,300)
                 controller_sprint(300)
             }
@@ -1499,6 +1499,8 @@ Return
         else if(chest == 19)
         {
             controller_sprint(1500)
+            controller_move_hor(10,200)
+            controller_move_ver(100,200)
             controller_aim_hor(15,1700)
             controller_sprint(2000)
             if(CURRENT_GUARDIAN == "Warlock")
@@ -1532,21 +1534,22 @@ Return
                 PreciseSleep(50)
                 360Controller.Buttons.A.SetState(True)
                 PreciseSleep(500)
+                360Controller.Axes.LY.SetState(50)
                 360Controller.Buttons.A.SetState(False)
                 PreciseSleep(50)
                 360Controller.Buttons.A.SetState(True)
-                PreciseSleep(350)
+                PreciseSleep(500)
                 360Controller.Buttons.A.SetState(False)
                 PreciseSleep(50)
-                360Controller.Axes.LY.SetState(50)
-                PreciseSleep(50)
                 360Controller.Buttons.LS.SetState(False)
+                PreciseSleep(500)
                 controller_aim_hor(85,1200)
-                controller_sprint(1650)
-                controller_aim_hor(15,1300)
-                controller_sprint(800)
+                controller_sprint(1600)
+                controller_aim_hor(15,1000)
+                controller_sprint(700)
+                controller_aim_ver(15,400)
             }
-            else
+            else ; Titan
             {
                 360Controller.Buttons.A.SetState(True)
                 PreciseSleep(50)
@@ -1556,40 +1559,43 @@ Return
                 PreciseSleep(50)
                 360Controller.Buttons.A.SetState(False)
                 360Controller.Axes.LY.SetState(100)
-                PreciseSleep(1500)
+                PreciseSleep(1350)
                 360Controller.Buttons.A.SetState(True)
                 PreciseSleep(50)
                 360Controller.Buttons.A.SetState(False)
                 360Controller.Axes.LY.SetState(50)
+                PreciseSleep(500)
                 controller_aim_hor(85,1200)
-                controller_sprint(1350)
-                controller_aim_hor(15,850)
-                controller_sprint(1100)
+                controller_sprint(1900)
+                PreciseSleep(200)
+                controller_aim_hor(15,1200)
+                controller_aim_ver(15,400)
+                controller_sprint(600)
             }
         }
 
         else if(chest == 16)
         {
             controller_sprint(1500)
-            controller_aim_hor(15,1700)
-            controller_sprint(1800)
-            controller_aim_hor(85,1100)
-            controller_sprint(4300)
-
-            controller_aim_hor(15,500)
-            controller_sprint(7000)
-
+            controller_move_hor(0,2000)
+            controller_sprint(1400)
+            controller_move_hor(100,750)
+            controller_aim_hor(15,1025)
+            controller_sprint(8500)
             controller_aim_hor(15,1200)
             controller_sprint(400)
         }
 
         else if(chest == 18)
-        {   
+        {
             controller_sprint(1500)
-            controller_aim_hor(15,1700)
-            controller_sprint(1800)
-            controller_aim_hor(85,1600)
-            controller_sprint(5950)
+            controller_move_hor(0,2000)
+            controller_sprint(1400)
+            controller_move_hor(100,750)
+            controller_move_hor(0,2200)
+            controller_sprint(4500)
+            controller_aim_hor(15,500)
+            controller_aim_ver(15,500)
         }
 
         else
@@ -1601,14 +1607,14 @@ Return
         
         if(DEBUG_SCREENSHOTS)
         {
-            filename := "Looting\" . chest . "_" . CURRENT_GUARDIAN . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
+            filename := "Looting\" . CURRENT_GUARDIAN . "_" . chest . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
             get_screenshot(filename,1)
         }
         StartMonitoring(CHEST_PID)
         StartMonitoring(EXOTIC_PID)
         PreciseSleep(500)
         360Controller.Buttons.X.SetState(true)
-        PreciseSleep(2000)
+        PreciseSleep(1300)
         360Controller.Buttons.X.SetState(false)
         PreciseSleep(50)
         
@@ -1883,7 +1889,7 @@ Return
                 loop, 5
                 {
                     ; check if we are still on the map screen (this means this function fucked up)
-                    percent_white := TO_color_check("920|58|56|7",0xECECEC,"ReloadLanding")
+                    percent_white := TO_color_check("920|58|56|7",0xECECEC,"MiscDetections\ReloadLanding")
                     if (percent_white >= 0.3)
                     {
                         controller_move_hor(0,100)
@@ -1892,7 +1898,7 @@ Return
                         360Controller.Buttons.A.SetState(false)
                         PreciseSleep(1000)
                     }
-                    percent_white := TO_color_check("920|58|56|7",0xECECEC,"ReloadLanding")
+                    percent_white := TO_color_check("920|58|56|7",0xECECEC,"MiscDetections\ReloadLanding")
                     if (!percent_white >= 0.3) ; we clicked succesfully
                         break
                 }
@@ -1970,7 +1976,7 @@ Return
                 loop, 5
                 {
                     ; check if we are still on the map screen (this means this function fucked up)
-                    percent_white := TO_color_check("46|577|10|10",0xFFFFFF,"OrbitLanding")
+                    percent_white := TO_color_check("46|577|10|10",0xFFFFFF,"MiscDetections\OrbitLanding")
                     if (!percent_white >= 0.3)
                     {
                         controller_move_hor(0,100)
@@ -1979,7 +1985,7 @@ Return
                         360Controller.Buttons.A.SetState(false)
                         PreciseSleep(1000)
                     }
-                    percent_white := TO_color_check("46|577|10|10",0xFFFFFF,"OrbitLanding")
+                    percent_white := TO_color_check("46|577|10|10",0xFFFFFF,"MiscDetections\OrbitLanding")
                     if (percent_white >= 0.3) ; we clicked succesfully
                         break
                 }
@@ -2083,7 +2089,7 @@ Return
         }
 
         search_start := A_TickCount
-        while (TO_color_check("803|270|42|60",0xFFFFFF,"CharacterChangeMenu") < 0.03)
+        while (TO_color_check("803|270|42|60",0xFFFFFF,"MiscDetections\CharacterChangeMenu") < 0.03)
         {
             if (A_TickCount - search_start > 90000)
                 break
@@ -2157,9 +2163,9 @@ Return
         search_start := A_TickCount
         while (true) ; wait for screen to be not black (just checking 3 random pixels)
         {
-            if(((!TO_color_check("50|50|5|5",0x000000,"CharacterChangeSelect")) > .1)
-                || ((!TO_color_check("100|100|5|5",0x000000,"CharacterChangeSelect")) > .1)
-                || ((!TO_color_check("400|400|5|5",0x000000),"CharacterChangeSelect") > .1)
+            if(((!TO_color_check("50|50|5|5",0x000000,"MiscDetections\CharacterChangeSelect")) > .1)
+                || ((!TO_color_check("100|100|5|5",0x000000,"MiscDetections\CharacterChangeSelect")) > .1)
+                || ((!TO_color_check("400|400|5|5",0x000000),"MiscDetections\CharacterChangeSelect") > .1)
                 || A_TickCount - search_start > 90000)
             {
                 break
@@ -2321,12 +2327,12 @@ Return
                     xref := 65 + x_off
                     yref := 60 + y_off
                     coords1 := xref "|" yref "|2|2"
-                    if(TO_color_check(coords1,0xFFFFFF,"Waitforspawn")> .3) ; raid logo
+                    if(TO_color_check(coords1,0xFFFFFF,"MiscDetections\Waitforspawn")> .3) ; raid logo
                     {
                         xref := 387 + x_off
                         yref := 667 + y_off
                         coords1 := xref "|" yref "|2|2" 
-                        if((TO_color_check(coords1,0xFF9AC1,"Waitforspawn_heavy") > .3) && (TO_color_check(coords1,0xFF99C2,"Waitforspawn_heavy") < .3)) ; heavy ammo
+                        if((TO_color_check(coords1,0xFF9AC1,"MiscDetections\Waitforspawn_heavy") > .3) && (TO_color_check(coords1,0xFF99C2,"MiscDetections\Waitforspawn_heavy") < .3)) ; heavy ammo
                         {
                             if(DEBUG_VERBOSE)
                                 FileAppend, INFO - Successfully loaded into the Landing - heavy ammo detected`n, %db_logfile%
@@ -2337,7 +2343,7 @@ Return
                     xref := 85 + x_off
                     yref := 84 + y_off
                     coords1 := xref "|" yref "|2|2" 
-                    if(TO_color_check(coords1,0xCB986F,"Waitforspawn_map") > .3) ; minimap
+                    if(TO_color_check(coords1,0xCB986F,"MiscDetections\Waitforspawn_map") > .3) ; minimap
                     {
                         if(DEBUG_VERBOSE)
                             FileAppend, INFO - Successfully loaded into the Landing - minimap detected`n, %db_logfile%
@@ -2347,7 +2353,7 @@ Return
                     xref := 387 + x_off
                     yref := 667 + y_off
                     coords1 := xref "|" yref "|2|2" 
-                    if((TO_color_check(coords1,0xFF9AC1,"Waitforspawn_heavy") > .3) && (TO_color_check(coords1,0xFF99C2,"Waitforspawn_heavy") < .3)) ; heavy ammo
+                    if((TO_color_check(coords1,0xFF9AC1,"MiscDetections\Waitforspawn_heavy") > .3) && (TO_color_check(coords1,0xFF99C2,"MiscDetections\Waitforspawn_heavy") < .3)) ; heavy ammo
                     {
                         if(DEBUG_VERBOSE)
                             FileAppend, INFO - Successfully loaded into the Landing - heavy ammo detected`n, %db_logfile%
@@ -2417,9 +2423,9 @@ Return
     controller_sniper(mode:=0)
     {
         anti_bungie_fuckassery()
-        if(!(TO_color_check("385|672|2|2",0xFF9AC1,"WeaponSwap") > .3) && !(TO_color_check("385|672|2|2",0xFF99C2,"WeaponSwap") > .3)) ; heavy ammo
+        if(!(TO_color_check("385|672|2|2",0xFF9AC1,"MiscDetections\WeaponSwap") > .3) && !(TO_color_check("385|672|2|2",0xFF99C2,"MiscDetections\WeaponSwap") > .3)) ; heavy ammo
         {
-            PreciseSleep(100)
+            PreciseSleep(50)
             360Controller.Buttons.Y.SetState(True)
             PreciseSleep(50)
             360Controller.Buttons.Y.SetState(False)
@@ -2524,13 +2530,19 @@ Return
 
     TO_color_check(coords, base_color:=0xFFFFFF,filename:="test") ; also bad function to check for specific color pixels in a given area
     {
+        colorcheckfilename := StrSplit(filename,"\")
+        if(colorcheckfilename[2] != "")
+            tmp := colorcheckfilename[2]
+        else
+            tmp := filename
+        colorcheckfilename := tmp
         db_colorlog := db_folder . "ColorDetection.log"
         count := CURRENT_GUARDIAN . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
         pD2WindowBitmap := Gdip_BitmapFromHWND(D2_WINDOW_HANDLE,clientOnly:=1)
         IF(DEBUG_VERBOSE)
         {
             IF(DEBUG_SCREENSHOTS)
-                Gdip_SaveBitmapToFile(pD2WindowBitmap, A_ScriptDir . "\debugs\Screenshots\ColorChecks\" . count . "_Full_" . filename . ".png")
+                Gdip_SaveBitmapToFile(pD2WindowBitmap, A_ScriptDir . "\debugs\Screenshots\" . filename . "_Full_" . count . ".png")
         }
         width := Gdip_GetImageWidth(pD2WindowBitmap)
         height := Gdip_GetImageHeight(pD2WindowBitmap)
@@ -2552,7 +2564,7 @@ Return
         IF(DEBUG_VERBOSE)
         {
             if(DEBUG_SCREENSHOTS)
-                Gdip_SaveBitmapToFile(pElementBitmap, A_ScriptDir . "\debugs\screenshots\ColorChecks\" . count . "_" . filename . ".png")
+                Gdip_SaveBitmapToFile(pElementBitmap, A_ScriptDir . "\debugs\Screenshots\Detection\ColorChecks\" . colorcheckfilename . "_" . count . ".png")
         }
         colx := 0
         coly := 0
@@ -3100,7 +3112,9 @@ Return
             FileDelete, %tmpfiles%
             tmpfiles := db_folder . "\Screenshots\Looting\*.png"
             FileDelete, %tmpfiles%
-            tmpfiles := db_folder . "\Screenshots\ColorChecks\*.png"
+            tmpfiles := db_folder . "\Screenshots\Detection\ColorChecks\*.png"
+            FileDelete, %tmpfiles%
+            tmpfiles := db_folder . "\Screenshots\MiscDetections\*.png"
             FileDelete, %tmpfiles%
 
             label_version.update_content("v" . VERSION . "   |   Debugging Enabled")
