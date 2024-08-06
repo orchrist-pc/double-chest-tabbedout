@@ -6,9 +6,9 @@ Download the zip file from the [latest release](https://github.com/orchrist-pc/d
 
 This macro farms exotic class items fully automatically by opening chests in the Pale Heart.
 
-There have been other macros similar to this recently (inluding ones where you can tab out while you use them, more info on that below) however this one is different in that it collects 2 chests every time instead of 1. This small change makes the macro much more efficent (nearly 2x) but also much more complex. 
+Now introducing a tabbed out mode for [a2tc's 2 chest farm](https://github.com/A2TC-YT/afk-class-item-double-chest)!
 
-Because of this increase in complexity the in game settings and setup matter much more than with similar macros, so be sure to fully read through and follow the instructions below.
+Because of this increase in complexity in the original script as well as the added support for a tabbed out mode, the in game settings and setup matter much more than with similar macros, so **be sure to fully read through and follow the instructions below**.
 
 If you are interested in learning more about how this macro works or about similar macros that work while you are tabbed out of the game join the [discord](https://thrallway.com).
 
