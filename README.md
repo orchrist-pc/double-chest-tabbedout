@@ -121,5 +121,21 @@ Download [Here](https://autohotkey.com/download/1.1/AutoHotkey_1.1.37.02_setup.e
      - **Open the Settings Menu**: Press `F9`
      - **Toggle the Overlay On/Off**: Press `F10`
 
+## Settings Menu
+- **Reset to Default**: This will delete your ini file and give you a fresh start
+
+### Settings
+   - **Mode**: This is the toggle to turn on Tabbed Out vs Mouse and Keyboard. (Mouse and Keyboard still works and is slightly faster than Tabbed Out)
+   - **Class**: This dropdown lets you select the class you are playing on. This is important as it determines movement
+   - **Slot**: Choose the slot this class shows up on your character select screen, this is important for reloading into orbit
+   - **Aachen**: Choose which Aachen you have equipped
+   - **Totals**: Toggle which stats are showing under "Total Stats". Just for this class, or for all classes.
+
+### Debugging
+**These settings can cause the script to run slower, only enable if you are having problems and need help.**
+   - **Debug**: Toggle this to enable logfile generation for support purposes. Defaults to errors only.
+   - **Verbose**: Enable verbose logging, this shows every success as well as errors.
+   - **Enable Screenshots**: This will take screenshots at specific moments. Important for debugging problems
+
 ## Further Help
 For more help or to ask other questions please join the [discord](https://thrallway.com).
