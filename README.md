@@ -147,7 +147,7 @@ For more help or to ask other questions please join the [discord](https://thrall
 ### CAN I GET BANNED FOR THIS
  - Most likely **No**. Reference this [TWAB](<https://www.bungie.net/7/en/News/article/twab-04-13-2023-best-dressed>) from 2023.
 ### WILL THIS STOP WORKING WITH TIER 2 / TIER 3 OVERTHROW
- - You will never get to Tier 2 / Tier 3 overthrow. The script throws you to orbit after 40 runs to reset the instance of The Landing.
+ - You will never get to Tier 2 / Tier 3 overthrow. The script throws you to orbit after 20 runs to reset the instance of The Landing.
 ### HOW CAN I PLAY OTHER GAMES WHILE THIS IS RUNNING
  - Follow this link and give this software a shot. Credit to @crushrr for the guide https://discord.com/channels/1119279989486010498/1259482362765377538
 
