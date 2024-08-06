@@ -2,7 +2,7 @@
 ; For support, help or other various macro related queries visit our discord at
 ; https://thrallway.com
 ;##############################################################
-global VERSION := "3.0.0"
+global VERSION := "3.0.1"
 ;##############################################################
 ; Attributions and credits
 ; =================================== ;
@@ -2638,7 +2638,8 @@ Return
                 MsgBox,3, Update Available!, ********A new version is available********`n`nCurrent: v%VERSION%.`nLatest: v%latest_version%`n`n*Yes* to be taken to the latest release.`n*No* to continue using the current version.`n*Cancel* to close the script.
                 IfMsgBox, Yes
                 {
-                    Run, https://github.com/orchrist-pc/double-chest-tabbedout/releases/tag/Latest
+                    latest_url := "https://github.com/orchrist-pc/double-chest-tabbedout/releases/tag/" . latest_version
+                    Run, % latest_url
                     exitapp
                 }
                 IfMsgBox, No
