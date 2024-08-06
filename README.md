@@ -8,10 +8,7 @@ There have been other macros similar to this recently (inluding ones where you c
 
 Because of this increase in complexity the in game settings and setup matter much more than with similar macros, so be sure to fully read through and follow the instructions below.
 
-If you are interested in learning more about how this macro works or about similar macros that work while you are tabbed out of the game join the [discord](https://discord.gg/KGyjysA5WY).
-
-## Support
-If you like this macro and want to support my work, you can do so on [Ko-Fi](https://ko-fi.com/a2tc_awesome_guy). Your support is greatly appreciated and helps me continue developing and improving macros like this. :3
+If you are interested in learning more about how this macro works or about similar macros that work while you are tabbed out of the game join the [discord](https://thrallway.com).
 
 ## Required Settings
 - AutoHotKey Version 1.1.37 is currently required.
@@ -94,7 +91,7 @@ Download [Here](https://autohotkey.com/download/1.1/AutoHotkey_1.1.37.02_setup.e
    - Make sure you have [AutoHotkey v1.1.37](https://www.autohotkey.com/download/ahk-install.exe) (not AHK v2) installed on your computer.
    
 2. **Download the Latest Release**
-   - Download the latest release of the macro from the [releases page](https://github.com/A2TC-YT/afk-class-item-double-chest/releases/latest). Once downloaded, unzip the file to a folder of your choice.
+   - Download the latest release of the macro from the [releases page](https://github.com/orchrist-pc/double-chest-tabbedout/releases/latest). Once downloaded, unzip the file to a folder of your choice.
    - Do Not Compile the scripts. They are intended to run in their raw .ahk state.
 
 3. **Ensure Settings Match**

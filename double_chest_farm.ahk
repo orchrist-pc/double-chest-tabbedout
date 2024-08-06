@@ -2638,8 +2638,7 @@ Return
                 MsgBox,3, Update Available!, ********A new version is available********`n`nCurrent: v%VERSION%.`nLatest: v%latest_version%`n`n*Yes* to be taken to the latest release.`n*No* to continue using the current version.`n*Cancel* to close the script.
                 IfMsgBox, Yes
                 {
-                    latest_url := "https://github.com/orchrist-pc/double-chest-tabbedout/releases/tag/" . latest_version
-                    Run, % latest_url
+                    Run, https://github.com/orchrist-pc/double-chest-tabbedout/releases/latest
                     exitapp
                 }
                 IfMsgBox, No
@@ -3111,8 +3110,9 @@ Return
         Gui, user_input: New, , AFK Class Item Farm
         Gui, user_input: +Caption -minimizebox +hWnduser_input_hwnd +AlwaysOnTop
         
-        Menu, MyMenuBar, Add, Help, opendiscord
+        Menu, MyMenuBar, Add, Help, openreadme
 		Menu, MyMenuBar, Add, Reset to Default, defaultsettings
+        Menu, MyMenuBar, Add, Discord, opendiscord
 
 		Gui, Menu, MyMenuBar
 
@@ -3253,7 +3253,13 @@ Return
     Return
 
     opendiscord:
+        toggle_gui("hide")
         Run, https://thrallway.com/
+    Return
+
+    openreadme:
+        toggle_gui("hide")
+        Run, https://github.com/orchrist-pc/double-chest-tabbedout
     Return
 
     defaultsettings:
