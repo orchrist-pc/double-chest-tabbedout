@@ -1,6 +1,6 @@
 # Double Loot AFK Exotic Class Item Farm
 ### Download Link
-Download from the [latest release](https://github.com/orchrist-pc/double-chest-tabbedout/releases/latest)
+Download the zip file from the [latest release](https://github.com/orchrist-pc/double-chest-tabbedout/releases/latest)
 
 ## About the Macro
 
@@ -36,6 +36,7 @@ Download [Here](https://autohotkey.com/download/1.1/AutoHotkey_1.1.37.02_setup.e
 - **Key Binding Storage**: Set to `Computer`
 - **Toggle Sprint**: If you don't normally use toggle sprint assign this key to anything (example: set to `p`)
 - **Bind Settings Key**: Assign to anything, just needs to be assigned
+- **Ensure no keys are bound to CAPSLOCK**: This can and will break your script
 
 
 ![Bindings](_Libraries/Reference_Images/All_Keybinds.png)
