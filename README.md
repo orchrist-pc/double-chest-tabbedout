@@ -15,6 +15,8 @@ If you are interested in learning more about how this macro works or about simil
 ## Support
 If you like this macro and want to support my work, you can do so on [Ko-Fi - Orchrist](https://ko-fi.com/orchrist).
 
+If you'd like to also support a major contributor to this project you can do so on [Ko-Fi - Asha](https://ko-fi.com/asha00)
+
 If you'd like to support the original creator whom this fork comes from, you can do so on [Ko-Fi - a2tc](https://ko-fi.com/a2tc_awesome_guy). 
 
 Your support is greatly appreciated and helps us continue developing and improving macros like this. :3
