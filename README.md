@@ -11,8 +11,8 @@ Because of this increase in complexity the in game settings and setup matter muc
 If you are interested in learning more about how this macro works or about similar macros that work while you are tabbed out of the game join the [discord](https://thrallway.com).
 
 ## Support
-If you like this macro and want to support my work, you can do so on [Ko-Fi](https://ko-fi.com/orchrist).
-If you'd like to support the original creator whom this fork comes from, you can do so on [Ko-Fi](https://ko-fi.com/a2tc_awesome_guy). 
+If you like this macro and want to support my work, you can do so on [Ko-Fi - Orchrist](https://ko-fi.com/orchrist).
+If you'd like to support the original creator whom this fork comes from, you can do so on [Ko-Fi - a2tc](https://ko-fi.com/a2tc_awesome_guy). 
 Your support is greatly appreciated and helps us continue developing and improving macros like this. :3
 
 ## Required Settings
