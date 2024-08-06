@@ -122,6 +122,7 @@ Download [Here](https://autohotkey.com/download/1.1/AutoHotkey_1.1.37.02_setup.e
      - **Toggle the Overlay On/Off**: Press `F10`
 
 ## Settings Menu
+![Settings Menu](_Libraries/Reference_Images/settings.png)
 - **Reset to Default**: This will delete your ini file and give you a fresh start
 
 ### Settings
