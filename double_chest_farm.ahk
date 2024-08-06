@@ -2,39 +2,40 @@
 ; For support, help or other various macro related queries visit our discord at
 ; https://thrallway.com
 ;##############################################################
-global VERSION := "3.0.0-beta.2"
+global VERSION := "3.0.0"
 ;##############################################################
-; 
-; MASSIVE Shoutout to @a2tc for  the original brainception of the Double Chest Macro
-;   - Without his ideas and foundation of the original two chest macro NONE of this is possible
-;   - All of his hard work for creating stat tracking and conceptualizing this
-;   - Helping to map out these chests and figure out optimal timings
-;   - General vibes man, dude's a genius
-; Special Thanks to @Zenairo for:
-;   - Massive refactoring and optimization of the og Double Chest Macro
-;   - Huge overhaul to Stat tracking
-;   - API coding and hosting
-;   - BIGLY Big Brain Energy
-;   - Finding that GDIP can screenshot in the background
-; Special Thanks to @Asha for:
-;   - Incredible levels of Patience and help with supporting the users
-;   - Countless hours of testing and brainstorming
-;   - Fixing stat tracking when Zen broke it :)
-;   - Literally all of the Titan pathing for tabbed out
-;   - Hours and hours of pathing tweaks and letting me bounce ideas off him
-;   - <3
-; Special Thanks to @antrament for:
-;	- The framework and class files necessary for tabbed out control to work
-;	- Quite literally none of the tabbed out versions of this farm work without his efforts in getting the afk xp script working
-;	- The support and troubleshooting he's done with the community in getting this working
-; Special Thanks to @_leopoldprime for:
-;   - API processing with the discord bot allowing for public stat tracking across all users
-;   - Discord bot development enabling for easy support and quick help for all users
-; Special Thanks to @krekn for:
-;   - Convincing our doubting asses that background app screenshots is a thing that works
-;   - Actually inspiring me to work on this
-; Special Thanks to @.zovc for helping on the OG version of tabbed out single chest macro
-; 
+; Attributions and credits
+; =================================== ;
+    ; MASSIVE Shoutout to @a2tc for  the original brainception of the Double Chest Macro
+    ;   - Without his ideas and foundation of the original two chest macro NONE of this is possible
+    ;   - All of his hard work for creating stat tracking and conceptualizing this
+    ;   - Helping to map out these chests and figure out optimal timings
+    ;   - General vibes man, dude's a genius
+    ; Special Thanks to @Asha for:
+    ;   - Incredible levels of Patience and help with supporting the users
+    ;   - Countless hours of testing and brainstorming
+    ;   - Fixing stat tracking when Zen broke it :)
+    ;   - Literally all of the Titan pathing for tabbed out
+    ;   - Chest 18 and 19 pathing for tabbed out
+    ;   - Hours and hours of pathing tweaks and letting me bounce ideas off him
+    ;   - <3
+    ; Special Thanks to @Zenairo for:
+    ;   - Massive refactoring and optimization of the og Double Chest Macro
+    ;   - Huge overhaul to Stat tracking
+    ;   - API coding and hosting
+    ;   - BIGLY Big Brain Energy
+    ;   - Finding that GDIP can screenshot in the background
+    ; Special Thanks to @antrament for:
+    ;	- The framework and class files necessary for tabbed out control to work
+    ;	- Quite literally none of the tabbed out versions of this farm work without his efforts in getting the afk xp script working
+    ;	- The support and troubleshooting he's done with the community in getting this working
+    ; Special Thanks to @_leopoldprime for:
+    ;   - API processing with the discord bot allowing for public stat tracking across all users
+    ;   - Discord bot development enabling for easy support and quick help for all users
+    ; Special Thanks to @krekn for:
+    ;   - Convincing our doubting asses that background app screenshots is a thing that works
+    ;   - Actually inspiring me to work on this
+    ; Special Thanks to @.zovc for helping on the OG version of tabbed out single chest macro
 ;##############################################################
 global DEBUG := False               ; Enables logging of all failures
 global DEBUG_VERBOSE := False       ; Enables logging of all failures and successes
@@ -64,6 +65,8 @@ OnExit("on_script_exit")
 
 ; Startup Checks
 ; =================================== ;
+    check_for_updates()
+
     if InStr(A_ScriptDir, "AppData")
     {
         MsgBox, You must extract all files from the .zip folder you downloaded before running this script.
@@ -2621,6 +2624,35 @@ Return
 
 ; Other Functions
 ; =================================== ;
+    check_for_updates()
+    {
+        version_url := "https://raw.githubusercontent.com/orchrist-pc/double-chest-tabbedout/main/_Libraries/version.txt"
+        WebRequest := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+        WebRequest.Open("GET", version_url)
+        WebRequest.Send()
+        if (WebRequest.Status = 200)
+        {
+            latest_version := Trim(WebRequest.ResponseText)
+            if (latest_version != VERSION)
+            {
+                MsgBox,3, Update Available!, ********A new version is available********`n`nCurrent: v%VERSION%.`nLatest: v%latest_version%`n`n*Yes* to be taken to the latest release.`n*No* to continue using the current version.`n*Cancel* to close the script.
+                IfMsgBox, Yes
+                {
+                    Run, https://github.com/orchrist-pc/double-chest-tabbedout/releases/tag/Latest
+                    exitapp
+                }
+                IfMsgBox, No
+                    return
+                else
+                    exitapp
+            }
+            else
+                return
+        }
+        else
+            return
+    }
+
     find_d2(mode:=0) ; find the client area of d2
     {
         ; Detect the Destiny 2 game window
