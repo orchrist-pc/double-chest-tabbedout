@@ -140,5 +140,31 @@ Download [Here](https://autohotkey.com/download/1.1/AutoHotkey_1.1.37.02_setup.e
    - **Verbose**: Enable verbose logging, this shows every success as well as errors.
    - **Enable Screenshots**: This will take screenshots at specific moments. Important for debugging problems
 
-## Further Help
+# Further Help
 For more help or to ask other questions please join the [discord](https://thrallway.com).
+
+# Frequently Asked Questions
+### CAN I GET BANNED FOR THIS
+ - Most likely **No**. Reference this [TWAB](<https://www.bungie.net/7/en/News/article/twab-04-13-2023-best-dressed>) from 2023.
+### WILL THIS STOP WORKING WITH TIER 2 / TIER 3 OVERTHROW
+ - You will never get to Tier 2 / Tier 3 overthrow. The script throws you to orbit after 40 runs to reset the instance of The Landing.
+### HOW CAN I PLAY OTHER GAMES WHILE THIS IS RUNNING
+ - Follow this link and give this software a shot. Credit to @crushrr for the guide https://discord.com/channels/1119279989486010498/1259482362765377538
+
+### ERROR THAT SAYS I DONT HAVE VIGEM INSTALLED
+ - Please run the script again, re-read the error messages and follow the popup prompts.
+![VigemWarning](_Libraries/Reference_Images/vigemwarning.png)
+![VigemWarning](_Libraries/Reference_Images/vigeminstall.png)
+ - Press yes on the installer to run the installation file as admin. If this does not work, please note the path the file has downloaded to in the popup message.
+ - If you are still having troubles please download and run the ViGEm Wrapper Fix script created by antra. Here: https://discord.com/channels/1119279989486010498/1119279990027059202/1258171436296572962
+
+### I SOMETIMES MISS THE CHEST
+ - Please go through all of the settings slowly and ensure you match to what the guide recommends.
+ - If after all that, it's still not working please send a screenshot of your Character screen, Video Settings, and Controller settings in our [support channel in discord](https://thrallway.com)
+
+### THE SCRIPT IS NOT SPRINTING FOR ME / THE CHEST IS NOT LOOTING EVEN THOUGH THE PROMPT IS UP / I AM AIMING UP WHEN I SHOULD BE AIMING DOWN
+ - Open your controller settings and reset them to default
+ - Go back to the guide and reference the necessary controller setting changes again
+
+### THE CURSOR IS NOT SELECTING THE LANDING FOR ME - IT IS TOO FAR TO THE LEFT OR TOO FAR TO THE RIGHT / LAUNCHING FROM THE ORBIT DOES NOT WORK
+ - Make sure that you do not have any unfinished missions that are in the pathway of the cursor when it is moving to the fast travel spot
