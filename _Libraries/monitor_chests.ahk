@@ -1,6 +1,6 @@
 #Requires AutoHotkey v1.1.27+
 #Include %A_ScriptDir%/Gdip_ALL.ahk
-#SingleInstance, Off
+#SingleInstance, Force
 #Persistent
 DetectHiddenWindows, On
 ; Register message handlers for start and stop commands
@@ -9,12 +9,11 @@ OnMessage(0x1002, "StopMonitoring")
 
 ; Get the task from command line arguments
 global main_pid := A_Args[1]
-global task := A_Args[2]
-global ml_logfolder := A_Args[3]
+;global task := A_Args[2]
+global ml_logfolder := A_Args[2]
 ;MsgBox, "mainpid: " . %main_pid% . " task: " . %task%
 
 global ml_c_logfile := ml_logfolder . "Chest_Monitor.log"
-global ml_e_logfile := ml_logfolder . "Exotic_Monitor.log"
 
 global pToken := -1
 global DESTINY_X := 0
@@ -26,7 +25,7 @@ global DESTINY_HEIGHT := 0
 global D2_WINDOW_HANDLE := -1
 find_d2(1)
 
-global monitoring := false
+global monitoring_chest := false
 
 Gui, +AlwaysOnTop +ToolWindow -Caption
 Gui, Show, Hide, MessageReceiver
@@ -35,29 +34,21 @@ SetTimer, CheckParentRunning, 10000
 Return
 
 StartMonitoring(wParam, lParam, msg, hwnd) {
+    find_d2(1)
     if (pToken = -1)
         pToken := Gdip_Startup()
-    monitoring := true
+    monitoring_exotic:= true
 
     Gui, +AlwaysOnTop +ToolWindow -Caption
     Gui, Show, Hide, MessageReceiver
+    CheckChestOpen()
+    SetTimer, CheckChestOpen, 100
 
-    if (task = "chest") {
-        CheckChestOpen()
-        SetTimer, CheckChestOpen, 100
-    } else if (task = "exotic") {
-        CheckExoticDrop()
-        SetTimer, CheckExoticDrop, 200
-    }
 }
 
 StopMonitoring(wParam, lParam, msg, hwnd) {
-    monitoring := false
-    if (task = "chest") {
-        SetTimer, CheckChestOpen, Off
-    } else if (task = "exotic") {
-        SetTimer, CheckExoticDrop, Off
-    }
+    monitoring_chest := false
+    SetTimer, CheckChestOpen, Off
 }
 
 CheckChestOpen()
@@ -70,36 +61,12 @@ CheckChestOpen()
     loop, %x%
 	{	
         testingfuck := colors[A_Index]
-        ; FileAppend, %A_Index% | %testingfuck%`n, %ml_c_logfile%
     	percent_white := exact_color_check("583|473|34|32", colors[A_Index], ml_c_logfile) ; checks for the circle around the interact prompt
     	if (percent_white > 0.01)
     	{
-            ; FileAppend, CHEST OPENED SUCCESSFULLY | Pct:%percent_white%`n, %ml_c_logfile%
         	PostMessage, 0x1003, 0, 0, , % "ahk_pid " main_pid
         	SetTimer, CheckChestOpen, Off
     	}
-        ; FileAppend, %A_Index% | Color:%testingfuck% | Pct:%percent_white%`n, %ml_c_logfile%
-    }
-    Return
-}
-
-CheckExoticDrop()
-{
-    ; WinActivate, Destiny 2
-    locations := ["1258|198|20|80","1258|278|20|80","1258|358|20|80","1258|438|20|80"]
-    loop, 4
-    {
-        if(DEBUG)
-            FileAppend, Loot Monitoring | STARTING EXOTIC DETECTION`n, %ml_e_logfile%
-        pct_col1 := exact_color_check(locations[A_Index],0x488DD8,ml_e_logfile)
-        pct_col2 := exact_color_check(locations[A_Index],0x48BDD8,ml_e_logfile)
-        if (pct_col1 > 0.01 || pct_col2 > 0.01)
-        {
-            if(DEBUG)
-                FileAppend, EXOTIC FOUND`n, %ml_e_logfile%
-            PostMessage, 0x1004, 0, 0, , % "ahk_pid " main_pid
-            SetTimer, CheckExoticDrop, Off
-        }
     }
     Return
 }

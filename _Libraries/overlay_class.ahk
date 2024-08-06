@@ -11,8 +11,10 @@ global dpiInverse := 1 / dpiScaling
 
 class Overlay
 {
-    __New(name, content, x_pos, y_pos, font_num:=3, font_size:=16, is_bold:=0, text_color:="White", has_background:=false, background_color:="Black", round_corners:=0)
+    __New(name, content, x_pos, y_pos, font_num:=3, font_size:=16, is_bold:=0, text_color:="White", has_background:=false, background_color:="Black", round_corners:=0, x_off:=0, y_off:=0)
     {
+        this.x_off := x_pos
+        this.y_off := y_pos
         x_pos := OVERLAY_OFFSET_X + x_pos
         y_pos := OVERLAY_OFFSET_Y + y_pos
         font_size := font_size * dpiInverse

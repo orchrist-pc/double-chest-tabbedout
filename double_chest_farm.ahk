@@ -2,7 +2,7 @@
 ; For support, help or other various macro related queries visit our discord at
 ; https://thrallway.com
 ;##############################################################
-global VERSION := "3.0.0-alpha.3"
+global VERSION := "3.0.0-beta.2"
 ;##############################################################
 ; 
 ; MASSIVE Shoutout to @a2tc for  the original brainception of the Double Chest Macro
@@ -36,9 +36,9 @@ global VERSION := "3.0.0-alpha.3"
 ; Special Thanks to @.zovc for helping on the OG version of tabbed out single chest macro
 ; 
 ;##############################################################
-global DEBUG := True               ; Enables logging of all failures
-global DEBUG_VERBOSE := True       ; Enables logging of all failures and successes
-global DEBUG_SCREENSHOTS := True   ; Enables saving screenshots for debugging purposes
+global DEBUG := False               ; Enables logging of all failures
+global DEBUG_VERBOSE := False       ; Enables logging of all failures and successes
+global DEBUG_SCREENSHOTS := False   ; Enables saving screenshots for debugging purposes
 global db_logfile := A_ScriptDir . "\debugs\AFKDoubleChest.log"
 global db_folder := A_ScriptDir . "\debugs\"
 ;##############################################################
@@ -112,8 +112,6 @@ OnExit("on_script_exit")
     global dGdip_SaveBitmapToFile := "Gdip_SaveBitmapToFile"
 
     pToken := %dGdip_Startup%()
-
-    global DEBUG := false
 
     global CHEST_PID, EXOTIC_PID
 
@@ -223,7 +221,7 @@ OnExit("on_script_exit")
 
     global overlay_elements := [label_version, label_total, label_current, label_togglegui_hotkey, label_start_hotkey, label_stop_hotkey, label_close_hotkey, label_center_d2_hotkey, label_startTO_hotkey, info_ui, runs_till_orbit_ui, current_class, current_time_afk_ui, current_runs_ui, current_chests_ui, current_exotics_ui, current_exotic_drop_rate_ui, current_average_loop_time_ui, current_missed_chests_percent_ui, current_chest_counters1, current_chest_counters2, total_time_afk_ui, total_runs_ui, total_chests_ui, total_exotics_ui, total_exotic_drop_rate_ui, total_average_loop_time_ui, total_missed_chests_percent_ui, total_chest_counters1, total_chest_counters2]
 
-    toggle_gui("show")
+    toggle_gui("show",1)
 
     total_time_afk_ui.update_content("Time AFK - " format_timestamp(compute_total_stat("time"), true, true, true, false))
     update_ui()
@@ -282,50 +280,14 @@ Return
 
     F4::  ; reload the script, release any possible held keys, save stats
     {        
-        if(ENABLE_TABBEDOUT)
-        {
-            360Controller.Buttons.A.SetState(false)
-            360Controller.Buttons.RS.SetState(false)
-            360Controller.Buttons.LS.SetState(false)
-            360Controller.Buttons.Y.SetState(false)
-            360Controller.Buttons.X.SetState(false)
-            360Controller.Axes.LX.SetState(50)
-            360Controller.Axes.LY.SetState(50)
-            360Controller.Axes.RX.SetState(50)
-            360Controller.Axes.RY.SetState(50)
-            360Controller.Axes.LT.SetState(0)
-            360Controller.Dpad.SetState("None")
-        }
-        else
-        {
-            for key, value in key_binds 
-                send, % "{" value " Up}"
-        }
+        release_d2_bindings()
         Reload
         Return
     }
 
     F5::  ; same thing but close the script
     {
-        if(ENABLE_TABBEDOUT)
-        {
-            360Controller.Buttons.A.SetState(false)
-            360Controller.Buttons.RS.SetState(false)
-            360Controller.Buttons.LS.SetState(false)
-            360Controller.Buttons.Y.SetState(false)
-            360Controller.Buttons.X.SetState(false)
-            360Controller.Axes.LX.SetState(50)
-            360Controller.Axes.LY.SetState(50)
-            360Controller.Axes.RX.SetState(50)
-            360Controller.Axes.RY.SetState(50)
-            360Controller.Axes.LT.SetState(0)
-            360Controller.Dpad.SetState("None")
-        }
-        else
-        {
-            for key, value in key_binds 
-                send, % "{" value " Up}"
-        }
+        release_d2_bindings()
         ExitApp
         Return
     }
@@ -368,12 +330,12 @@ Return
             Return
 
         ; Timers during the farm loop cause random interrupts during timing sensitive areas
-        SetTimer, check_tabbed_out, Off 
+        ;SetTimer, check_tabbed_out, Off 
         DetectHiddenWindows, On
         WinGet, MainPID, PID, %A_ScriptFullPath% - AutoHotkey v
         ; Start the child scripts
-        Run, %A_AhkPath% "./_Libraries/monitor_loot.ahk" %MainPID% "chest" %db_folder%, , , CHEST_PID
-        Run, %A_AhkPath% "./_Libraries/monitor_loot.ahk" %MainPID% "exotic" %db_folder%, , , EXOTIC_PID
+        Run, %A_AhkPath% "./_Libraries/monitor_chests.ahk" %MainPID% %db_folder%, , , CHEST_PID
+        Run, %A_AhkPath% "./_Libraries/monitor_exotics.ahk" %MainPID% %db_folder%, , , EXOTIC_PID
         
         HEARTBEAT_ON := true
         send_heartbeat()
@@ -388,6 +350,7 @@ Return
         {
             if (orbit_landing())
                 break
+            release_d2_bindings()
             PreciseSleep(500)
             change_character()
             PreciseSleep(500)
@@ -416,6 +379,7 @@ Return
                 if (!wait_for_spawn(45000)) ; if we dont spawn in, change character and try again
                 {
                     info_ui.update_content("Didn't detect spawn in :(")
+                    release_d2_bindings()
                     PreciseSleep(5000)
                     break
                 }
@@ -494,6 +458,7 @@ Return
             {
                 if (orbit_landing())
                     break
+                release_d2_bindings()
                 PreciseSleep(500)
                 change_character()
                 PreciseSleep(500)
@@ -511,19 +476,24 @@ Return
 
     tabbedout:
     {
+        if(DEBUG || DEBUG_SCREENSHOTS || DEBUG_VERBOSE)
+            label_version.update_content("v" . VERSION . "   |   Debugging Enabled")
+        else
+            label_version.update_content("v" . VERSION)
+
         if (!INPUT_POPUP_HANDLED)
             Return
 
         ; Timers during the farm loop cause random interrupts during timing sensitive areas
-        SetTimer, check_tabbed_out, Off 
+        ;SetTimer, check_tabbed_out, Off 
         toggle_gui("hide")
         DetectHiddenWindows, On
         WinGet, MainPID, PID, %A_ScriptFullPath% - AutoHotkey
         info_ui.update_content("Starting chest farm")
         ; Start the child scripts   
-
-        Run, %A_AhkPath% "./_Libraries/monitor_loot.ahk" %MainPID% "chest" %db_folder%, , , CHEST_PID
-        Run, %A_AhkPath% "./_Libraries/monitor_loot.ahk" %MainPID% "exotic" %db_folder%, , , EXOTIC_PID
+        
+        Run, %A_AhkPath% "./_Libraries/monitor_chests.ahk" %MainPID% %db_folder%, , , CHEST_PID
+        Run, %A_AhkPath% "./_Libraries/monitor_exotics.ahk" %MainPID% %db_folder%, , , EXOTIC_PID
         
         HEARTBEAT_ON := true
         set_fireteam_privacy("closed",1) ;; second value sets to tabbed out mode
@@ -535,6 +505,7 @@ Return
         {
             if(orbit_landing(1))
                 break
+            release_d2_bindings()
             PreciseSleep(500)
             if(DEBUG)
                 FileAppend, INFO - Reloading character after failed launch from orbit`n, %db_logfile%
@@ -550,7 +521,7 @@ Return
         total_time_afk_ui.add_time(compute_total_stat("time"), false)
         info_ui.update_content("Loading in")
 
-        reload_landing(1)
+        ;reload_landing(1)
         PreciseSleep(10000)
 
         loop, ; Orbit loop
@@ -574,6 +545,7 @@ Return
                     if(DEBUG)
                         FileAppend, ATTENTION - Did not succesfully detect load into the landing`n, %db_logfile%
                     info_ui.update_content("Didn't detect spawn in :(")
+                    release_d2_bindings()
                     PreciseSleep(5000)
                     break
                 }
@@ -664,6 +636,7 @@ Return
             {
                 if (orbit_landing(1))
                     break
+                release_d2_bindings()
                 PreciseSleep(500)
                 change_character("",1)
                 PreciseSleep(500)
@@ -1189,7 +1162,7 @@ Return
                 360Controller.Axes.LT.SetState(0)
                 Return true
             }
-            if(A_TickCount - timer_start > 20000)
+            if(A_TickCount - timer_start > 30000)
             {                
                 if(DEBUG_SCREENSHOTS)
                 {
@@ -1205,7 +1178,7 @@ Return
 
     TO_find_g4_chests()
     {
-        g4_coords := ["1177|275|25|25|0.05","1040|520|100|60|0.01"]
+        g4_coords := ["1167|265|35|34|0.05","1040|520|100|60|0.01"]
         g4_chest := [20,18]
         g4_index := g4_chest.MaxIndex()
         chest_found := 16
@@ -1318,6 +1291,13 @@ Return
         360Controller.Buttons.X.SetState(false)
         PreciseSleep(50)
         
+        if(DEBUG_SCREENSHOTS)
+        {
+            PreciseSleep(2000)
+            filename := "Looting\21_" . CURRENT_GUARDIAN . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
+            get_screenshot(filename,1)
+        }
+
         if(CHEST_OPENED)
         {
             if(DEBUG_VERBOSE)
@@ -1329,11 +1309,6 @@ Return
             if(DEBUG)
             {
                 FileAppend, ATTENTION - Did not succesfully loot chest 21`n, %db_logfile%
-                if(DEBUG_SCREENSHOTS)
-                {
-                    filename := "Looting\21_" . CURRENT_GUARDIAN . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
-                    get_screenshot(filename,1)
-                }
             }
             StopMonitoring(CHEST_PID)
         }
@@ -1346,7 +1321,7 @@ Return
         g4_chest_opened := false
         CHEST_OPENED := false
 
-        ;chest = 18
+        ;chest = 19
 
         360Controller.Buttons.Y.SetState(True)
         controller_move_hor(100,700)
@@ -1498,13 +1473,12 @@ Return
 
         else if(chest == 19)
         {
-            controller_sprint(1500)
-            controller_move_hor(10,200)
-            controller_move_ver(100,200)
-            controller_aim_hor(15,1700)
-            controller_sprint(2000)
             if(CURRENT_GUARDIAN == "Warlock")
             {
+                controller_sprint(1500)
+                controller_aim_hor(15,1700)
+                controller_sprint(2000)
+
                 360Controller.Buttons.A.SetState(True)
                 PreciseSleep(50)
                 360Controller.Buttons.A.SetState(False)
@@ -1518,13 +1492,21 @@ Return
                 PreciseSleep(50)
                 360Controller.Buttons.A.SetState(False)
                 360Controller.Axes.LY.SetState(50)
+                PreciseSleep(500)
                 controller_aim_hor(85,1200)
-                controller_sprint(1300)
-                controller_aim_hor(15,900)
-                controller_sprint(1200)
+                controller_sprint(1900)
+                PreciseSleep(200)
+                controller_aim_hor(15,1200)
+                controller_aim_ver(15,400)
+                controller_sprint(600)
             }
             else if(CURRENT_GUARDIAN == "Hunter")
             {
+                controller_sprint(1500)
+                controller_move_hor(10,400)
+                controller_move_ver(100,300)
+                controller_aim_hor(15,1700)
+                controller_sprint(1700)
                 360Controller.Buttons.LS.SetState(True)
                 PreciseSleep(50)
                 360Controller.Axes.LY.SetState(100)
@@ -1534,7 +1516,6 @@ Return
                 PreciseSleep(50)
                 360Controller.Buttons.A.SetState(True)
                 PreciseSleep(500)
-                360Controller.Axes.LY.SetState(50)
                 360Controller.Buttons.A.SetState(False)
                 PreciseSleep(50)
                 360Controller.Buttons.A.SetState(True)
@@ -1542,6 +1523,7 @@ Return
                 360Controller.Buttons.A.SetState(False)
                 PreciseSleep(50)
                 360Controller.Buttons.LS.SetState(False)
+                360Controller.Axes.LY.SetState(50)
                 PreciseSleep(500)
                 controller_aim_hor(85,1200)
                 controller_sprint(1600)
@@ -1551,6 +1533,9 @@ Return
             }
             else ; Titan
             {
+                controller_sprint(1500)
+                controller_aim_hor(15,1700)
+                controller_sprint(2000)
                 360Controller.Buttons.A.SetState(True)
                 PreciseSleep(50)
                 360Controller.Buttons.A.SetState(False)
@@ -1576,12 +1561,25 @@ Return
 
         else if(chest == 16)
         {
+            /*
             controller_sprint(1500)
             controller_move_hor(0,2000)
             controller_sprint(1400)
             controller_move_hor(100,750)
-            controller_aim_hor(15,1025)
+            controller_aim_hor(,1025)
             controller_sprint(8500)
+            controller_aim_hor(15,1200)
+            controller_sprint(400)
+            */
+
+            controller_sprint(1500)
+            controller_move_hor(0,2000)
+            controller_sprint(1400)
+            controller_move_hor(100,750)
+            controller_move_hor(0,2200)
+            controller_sprint(1200)
+            controller_aim_hor(15,1100)
+            controller_sprint(6500)
             controller_aim_hor(15,1200)
             controller_sprint(400)
         }
@@ -1605,11 +1603,7 @@ Return
             Return False
         }
         
-        if(DEBUG_SCREENSHOTS)
-        {
-            filename := "Looting\" . CURRENT_GUARDIAN . "_" . chest . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
-            get_screenshot(filename,1)
-        }
+
         StartMonitoring(CHEST_PID)
         StartMonitoring(EXOTIC_PID)
         PreciseSleep(500)
@@ -1617,7 +1611,14 @@ Return
         PreciseSleep(1300)
         360Controller.Buttons.X.SetState(false)
         PreciseSleep(50)
-        
+
+        if(DEBUG_SCREENSHOTS)
+        {
+            PreciseSleep(2000)
+            filename := "Looting\" . CURRENT_GUARDIAN . "_" . chest . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
+            get_screenshot(filename,1)
+        }
+
         if (CHEST_OPENED)
         {   
             if(DEBUG_VERBOSE)
@@ -1827,6 +1828,8 @@ Return
 ; =================================== ;
     reload_landing(mode:=0) ; in the name innit
     {
+
+
         loop, 5
         {   
             if(mode == 0)
@@ -2748,10 +2751,27 @@ Return
 
     release_d2_bindings()
     {
+        if(ENABLE_TABBEDOUT)
+        {
+            360Controller.Buttons.A.SetState(false)
+            360Controller.Buttons.RS.SetState(false)
+            360Controller.Buttons.LS.SetState(false)
+            360Controller.Buttons.Y.SetState(false)
+            360Controller.Buttons.X.SetState(false)
+            360Controller.Axes.LX.SetState(50)
+            360Controller.Axes.LY.SetState(50)
+            360Controller.Axes.RX.SetState(50)
+            360Controller.Axes.RY.SetState(50)
+            360Controller.Axes.LT.SetState(0)
+            360Controller.Dpad.SetState("None")
+        }
+
         for key, value in key_binds 
             send, % "{" value " Up}"
         Return
     }
+
+
 ; =================================== ;
 
 ; Debugging Functions
@@ -2800,25 +2820,37 @@ Return
 ; Overlay and Stat Functions
 ; =================================== ;
 
-    toggle_gui(visibility := "")
+    toggle_gui(visibility := "",firstlaunch:=0)
     {
         if (visibility = "")
             visibility := (GUI_VISIBLE) ? "hide" : "show"
 
-        for index, ui_element in overlay_elements
-        {
-            ui_element.toggle_visibility(visibility)
-            if (ui_element.has_background)
-                ui_element.toggle_background_visibility(visibility)
-        }
-
         if (visibility = "show") {
-            Gui, info_BG: Show
+            find_d2(1)
+            OVERLAY_OFFSET_X := DESTINY_X
+            OVERLAY_OFFSET_Y := DESTINY_Y
+            Gui, info_BG: Show, % "x" destiny_x-350 " y" destiny_y " w" 350 * dpiInverse " h" DESTINY_HEIGHT+1 " NA"
+            Winset, Region, % "w500 h" DESTINY_HEIGHT+1 " 0-0 r15-15", ahk_id %ExtraInfoBGGUI%
             GUI_VISIBLE := true
         } else {
             Gui, info_BG: Hide
             GUI_VISIBLE := false
         }
+
+        for index, ui_element in overlay_elements
+        {
+            tmpx := ui_element.x_off + OVERLAY_OFFSET_X
+            tmpy := ui_element.y_off + OVERLAY_OFFSET_Y
+            ;MsgBox, %tmpx% %tmpy%
+            if (visibility = "show" && firstlaunch == 0){
+                ui_element.update_position(tmpx,tmpy)
+            }
+            ui_element.toggle_visibility(visibility)
+            if (ui_element.has_background)
+                ui_element.toggle_background_visibility(visibility)
+        }
+
+
         
         Return
     }
@@ -3165,7 +3197,7 @@ Return
         label_total.update_content("Total AFK Stats (" . (TOTALS_DISPLAY = "All" ? "All" : CURRENT_GUARDIAN) . "):")
         INPUT_POPUP_HANDLED := true
         WinActivate, ahk_id %D2_WINDOW_HANDLE%
-        SetTimer, check_tabbed_out, 1000
+        ;SetTimer, check_tabbed_out, 1000
         Gui, user_input: Destroy
         write_ini()
     Return
