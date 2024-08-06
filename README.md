@@ -1,4 +1,6 @@
 # Double Loot AFK Exotic Class Item Farm
+### Download Link
+Download from the [latest release](https://github.com/orchrist-pc/double-chest-tabbedout/releases/latest)
 
 ## About the Macro
 
