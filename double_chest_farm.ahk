@@ -2,7 +2,7 @@
 ; For support, help or other various macro related queries visit our discord at
 ; https://thrallway.com
 ;##############################################################
-global VERSION := "3.0.0"
+global VERSION := "3.0.1"
 ;##############################################################
 ; Attributions and credits
 ; =================================== ;
