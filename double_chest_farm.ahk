@@ -3111,6 +3111,11 @@ Return
         Gui, user_input: New, , AFK Class Item Farm
         Gui, user_input: +Caption -minimizebox +hWnduser_input_hwnd +AlwaysOnTop
         
+        Menu, MyMenuBar, Add, Help, opendiscord
+		Menu, MyMenuBar, Add, Reset to Default, defaultsettings
+
+		Gui, Menu, MyMenuBar
+
        ; Main Settings Box
         Gui, user_input: Font, s12 bold q5 cblack, verdana
         Gui, user_input: Add, GroupBox, x15 y10 w200 h185, Settings  ; Header
@@ -3246,7 +3251,27 @@ Return
         total_time_afk_ui.update_content("Time AFK - " format_timestamp(compute_total_stat("time"), true, true, true, false))
         update_ui()
     Return
-    
+
+    opendiscord:
+        Run, https://thrallway.com/
+    Return
+
+    defaultsettings:
+        gui, destroy
+        FileDelete, %settingsini%
+        MsgBox,4, Reset Settings and Stats, ****WARNING****`n`nAre you sure you would like to delete your current stats and settings?`n`n**Yes** to delete your ini file.`n**No** to cancel.
+        IfMsgBox, Yes
+        {
+            FileDelete, double_chest_farm.ini
+            gosub, settingsgui
+            Return
+        }
+        IfMsgBox, No
+            Return
+        else
+            Return
+    Return
+
     ; Exit script when GUI is closed
     GuiClose:
         Gui, user_input: Destroy
