@@ -115,4 +115,4 @@ Download [Here](https://autohotkey.com/download/1.1/AutoHotkey_1.1.37.02_setup.e
      - **Toggle the Overlay On/Off**: Press `F10`
 
 ## Further Help
-For more help or to ask other questions please join the [discord](https://discord.gg/KGyjysA5WY).
+For more help or to ask other questions please join the [discord](https://thrallway.com).
