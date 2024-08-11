@@ -65,22 +65,25 @@ OnExit("on_script_exit")
 
 ; Startup Checks
 ; =================================== ;
-    check_for_updates()
+    check_for_updates() ; checks for the latest version on github and compares to your version. will prompt the user if a new version is found 
 
-    if InStr(A_ScriptDir, "AppData")
+    if InStr(A_ScriptDir, "AppData")    ; checks if you actually extraced the files instead of just double clicking from within the zip file
     {
         MsgBox, You must extract all files from the .zip folder you downloaded before running this script.
         Exitapp  
     }
 
-	if (!FileExist( A_ScriptDir "/_Libraries/overlay_class.ahk" ) || !FileExist( A_ScriptDir "/_Libraries/Gdip_all.ahk" ))
+	if (!FileExist( A_ScriptDir "/_Libraries/overlay_class.ahk" ) || !FileExist( A_ScriptDir "/_Libraries/Gdip_all.ahk" )
+         || !FileExist( A_ScriptDir "/_Libraries/AntraClassFiles.ahk" ) || !FileExist( A_ScriptDir "/_Libraries/monitor_chests.ahk" )
+         || !FileExist( A_ScriptDir "/_Libraries/monitor_exotics.ahk" ))                        ; checks for the included library files
     {
         MsgBox, Required files were not found in the same directory as this script. Place it in the same directory as overlay_class.ahk and Gdip_all.ahk.
         Exitapp  
     }
 
     WinGet, D2PID, PID, ahk_class Tiger D3D Window
-    if(IsAdminProcess(D2PID)) {
+    if(IsAdminProcess(D2PID))   ; forces script to run as admin I guess?
+    {
         if not A_IsAdmin {
             Run *RunAs "%A_AhkPath%" "%A_ScriptFullPath%"
         }
@@ -327,7 +330,7 @@ Return
 
 ; Main Functions (run the script)
 ; =================================== ;
-    tabbedin:
+    tabbedin:   ; this was all written by @a2tc, does some stuff I think, kinda cool
     {
         if (!INPUT_POPUP_HANDLED)
             Return
@@ -477,28 +480,28 @@ Return
         Return
     }
 
-    tabbedout:
+    tabbedout:  ; tabbed out was written by @orchrist
     {
         if(DEBUG || DEBUG_SCREENSHOTS || DEBUG_VERBOSE)
             label_version.update_content("v" . VERSION . "   |   Debugging Enabled")
         else
             label_version.update_content("v" . VERSION)
 
-        if (!INPUT_POPUP_HANDLED)
+        if (!INPUT_POPUP_HANDLED)   ; makes sure that the settings GUI has been interacted with at least once
             Return
 
         ; Timers during the farm loop cause random interrupts during timing sensitive areas
         ;SetTimer, check_tabbed_out, Off 
-        toggle_gui("hide")
+        toggle_gui("hide")      ; hide GUI when starting tabbed out as the overlay will be on top of other windows and look weird
         DetectHiddenWindows, On
         WinGet, MainPID, PID, %A_ScriptFullPath% - AutoHotkey
         info_ui.update_content("Starting chest farm")
-        ; Start the child scripts   
         
+        ; Start the child scripts responsible for monitoring when chests and exotics are successfully opened / found
         Run, %A_AhkPath% "./_Libraries/monitor_chests.ahk" %MainPID% %db_folder%, , , CHEST_PID
         Run, %A_AhkPath% "./_Libraries/monitor_exotics.ahk" %MainPID% %db_folder%, , , EXOTIC_PID
         
-        HEARTBEAT_ON := true
+        HEARTBEAT_ON := true    ; enables the API interaction
         set_fireteam_privacy("closed",1) ;; second value sets to tabbed out mode
         PreciseSleep(1000)
         change_character("",1)
@@ -506,16 +509,16 @@ Return
 
         loop, ; loop until we actually load in lol
         {
-            if(orbit_landing(1))
+            if(orbit_landing(1))    ; go to the landing from orbit when called, if it returns true we break out of the loop
                 break
-            release_d2_bindings()
+            release_d2_bindings()   ; just incase inputs are stuck and doing weird shit
             PreciseSleep(500)
             if(DEBUG)
                 FileAppend, INFO - Reloading character after failed launch from orbit`n, %db_logfile%
-            change_character("",1)
+            change_character("",1)  ; return to char select if we didn't successfully load into the Landing
             PreciseSleep(500)
         }
-        */
+        
         loop_successful := false
         CURRENT_LOOP_START_TIME := A_TickCount
         current_time_afk_ui.toggle_timer("start")
@@ -527,12 +530,12 @@ Return
         ;reload_landing(1)
         PreciseSleep(10000)
 
-        loop, ; Orbit loop
+        loop, ; main loop that handles all of the stuff you do for the farm
         {
             remaining_runs := 20 ; Initialize the remaining runs counter
             remaining_chests := 40 ; use this to know how many loops to do before we reach overthrow level 2
-            ;runs_till_orbit_ui.update_content("Runs till next orbit - " Ceil(remaining_chests/2))
             runs_till_orbit_ui.update_content("Runs till next orbit - " remaining_runs)
+
             loop, ; Run landing loop (break out of this if overthrow L2)
             {
                 if (loop_successful) ; Reset the time only if the loop made it to the end.
@@ -553,42 +556,43 @@ Return
                     break
                 }
                 info_ui.update_content("Forcing chest 21 spawn")
-                ;PreciseSleep(1000)
-                if (PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Aachen"] == "Kinetic")
-                    controller_sniper()
+
+                if (PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Aachen"] == "Kinetic")   ; pulls the saved settings for the sniper slot and switches accordingly
+                    controller_sniper()     ; default has no value here and will choose kinetic, see function below for how this works
                 else 
                     controller_sniper(1)
 
-                ;PreciseSleep(500)
                 TO_force_chest() ; go to first corner and get chest spawns
                 info_ui.update_content("Waiting for chest spawns")
-                send_heartbeat()
+                send_heartbeat() ; updates API with current stats
 
-                if (!TO_find_chest21()) ; if no first chest we relaunch
+                if (!TO_find_chest21()) ; if the first chest isn't found we relaunch the landing
                 {
                     if(DEBUG)
                         FileAppend, ATTENTION - Unable to locate Chest 21 reloading the landing`n, %db_logfile%
                     reload_landing(1)
                     update_ui()
-                    continue
+                    continue    ; this breaks us out of the landing loop but continues the main loop
                 }
+
                 info_ui.update_content("Going to chest 21")
-                log_chest("appearance", 21)
-                group_5_chest_opened := TO_run_to_chest21() ; open chest 21 if its spawned
-                if (group_5_chest_opened)
+                log_chest("appearance", 21) ; log that chest 21 was found
+
+                group_5_chest_opened := TO_run_to_chest21() ; run to and open chest 21 if its spawned ; can probably be condensed into if(TO_run_to_chest21()) but I'm retarded
+                if (group_5_chest_opened)   ; if the chest wasn't opened we don't need to break out we can just continue the landing loop
                 {
                     log_chest("pickup", 21)
                     remaining_chests--
                 }
-                update_chest_ui()
-                
+                update_chest_ui()                                     ; update UI stuff
                 info_ui.update_content("Looking for group 4 chest")
-                G4Chest := TO_find_g4_chests()
+
+                G4Chest := TO_find_g4_chests()  ; look for the second chest found in group 4. this needs a variable as we use the returned value later
                 if(G4Chest) ; open the second chest (from group 4)
                 {
                     info_ui.update_content("Going to chest " G4Chest)
                     log_chest("appearance", G4Chest)
-                    group_4_chest_opened := TO_run_to_G4_chest(G4Chest)
+                    group_4_chest_opened := TO_run_to_G4_chest(G4Chest)  ; run to and open the second chest if its spawned ; can probably be condensed into if(TO_run_to_G4_chest()) but I'm retarded
                     if (group_4_chest_opened)
                     {
                         log_chest("pickup", G4Chest)
@@ -597,8 +601,8 @@ Return
                     update_chest_ui()
                 }
 
-                StopMonitoring(EXOTIC_PID)
-                if (EXOTIC_DROP)
+                StopMonitoring(EXOTIC_PID)  ; make sure the monitoring call gets stopped and returns what was found
+                if (EXOTIC_DROP)    ; did we find an exotic? if so update stats
                 {
                     if(DEBUG_VERBOSE)
                         FileAppend, EXOTIC - Exotic Drop Detected`n, %db_logfile%
@@ -618,13 +622,13 @@ Return
                 runs_till_orbit_ui.update_content("Runs till next orbit - " remaining_runs)
                 update_ui()
 
-                if (remaining_runs > 0)
+                if (remaining_runs > 0) ; reloads the landing if we still got work to do
                 {
                     info_ui.update_content("Relaunching Landing")
                     reload_landing(1)
                     send_heartbeat()
                 }
-                ; Also break out if runs = 20 as fallback for not tracking chests
+                ; Break out if runs = 20
                 if (remaining_runs <= 0)
                 {
                     if(DEBUG_VERBOSE)
@@ -632,10 +636,12 @@ Return
                     break
                 }
             }
-            info_ui.update_content("Orbit and relaunch") ; opened 40 chests, time to orbit and relaunch
+
+            ;; we are now outside of the landing loop!! this stuff is called once we break out of the landing loop
+            info_ui.update_content("Orbit and relaunch") ; did 20 loops, time to orbit and relaunch
             change_character("",1)
             PreciseSleep(500)
-            loop, ; same thing as start, go until we actually start loading in
+            loop, ; same thing as start, go until we actually start loading in this should really just be it's own function but w.e
             {
                 if (orbit_landing(1))
                     break
@@ -1127,7 +1133,7 @@ Return
 ; Tabbed Out Chest Functions
 ; =================================== ;
 
-    TO_force_chest()
+    TO_force_chest()    ; forces chest 21 to spawn by running into the pavilion and jerking off in a corner for a few seconds
     {
         if(DEBUG_VERBOSE)
             FileAppend, INFO - Running into pavilion to force chest 21`n, %db_logfile%
@@ -1143,14 +1149,14 @@ Return
         controller_move_ver(100,1300)               ; run into corner
     }
 
-    TO_find_chest21()
+    TO_find_chest21()   ; makes sure we actually came in the corner and look for chest 21 with some basic bitch image detection
     {
         timer_start := A_TickCount
         chest_found := false
         360Controller.Axes.LT.SetState(100)
         while(not chest_found)
         {
-            if(TO_color_check("1198|357|25|25",0xFFFFFF,"Detection\Chest21") > 0.12)
+            if(TO_color_check("1198|357|25|25",0xFFFFFF,"Detection\Chest21") > 0.12)    ;  checks for the chest 21 icon in a specific location off to the side of the screen by looking for the color white in the icon. .12 is 12%. we need it to be at least 12% white. kinda racist if you think about it
             {
                 if(DEBUG_VERBOSE)
                 {
@@ -1165,7 +1171,7 @@ Return
                 360Controller.Axes.LT.SetState(0)
                 Return true
             }
-            if(A_TickCount - timer_start > 30000)
+            if(A_TickCount - timer_start > 30000)   ; if this takes more than 30 seconds we fuck off and restart
             {                
                 if(DEBUG_SCREENSHOTS)
                 {
@@ -1179,17 +1185,19 @@ Return
         Return false
     }
 
-    TO_find_g4_chests()
+    TO_find_g4_chests() ; looks for the group 4 chest that spawned and returns the chest number
     {
-        g4_coords := ["1167|265|35|34|0.05","1040|520|100|60|0.01"]
+        g4_coords := ["1167|265|35|34|0.05","1040|520|100|60|0.01"] ; easy way to add locations to check and their percentages
         g4_chest := [20,18]
         g4_index := g4_chest.MaxIndex()
-        chest_found := 16
+        chest_found := 16 ; defaults to chest 16 if nothing else is found because I could never get it to successfully detect chest 16 on it's own, inefficient if something went wrong but it's rare so w.e fuck you
         timer_start := A_TickCount
 
+        ;; move the reticle to the first position
         controller_aim_ver(90,425)      ;; 425
         controller_aim_hor(90,2100)     ;; 2100
 
+        ;; looks for chest 17
         if((TO_color_check("251|137|29|20",0xFFFFFF,"Detection\Chest17") > 0.05) || (TO_color_check("285|125|30|20",0xFFFFFF,"Detection\Chest17") > 0.05))
         {
             if(DEBUG_VERBOSE)
@@ -1198,13 +1206,14 @@ Return
             360Controller.Axes.LT.SetState(0)
             PreciseSleep(1000)
 
-            controller_aim_ver(90,475)      ;; 425
-            controller_aim_hor(10,300)     ;; 2100
+            ;; corrects the reticle to be prepped for running
+            controller_aim_ver(90,475)
+            controller_aim_hor(10,300)
             Return chest_found
         }
 
-        360Controller.Axes.LT.SetState(100)
-
+        360Controller.Axes.LT.SetState(100) ; starts ADSing (chest 17 doesn't need to)
+        ;; looks for chest 19
         while(chest_found == 16)
         {
             loop, 5
@@ -1216,28 +1225,30 @@ Return
                     chest_found := 19
                     360Controller.Axes.LT.SetState(0)
                     PreciseSleep(1000)
-            
-                    controller_aim_ver(90,475)      ;; 425
-                    controller_aim_hor(10,300)     ;; 2100
+                    ;; corrects the reticle to be prepped for running
+                    controller_aim_ver(90,475)
+                    controller_aim_hor(10,300)
                     Return chest_found
                 }
             }
-            if(A_TickCount - timer_start > 4000)
+            if(A_TickCount - timer_start > 4000)   ; if it takes more than 4 seconds the chest isn't here
                 break
         }
         timer_start := A_TickCount
 
+        ;; stop ADSing
         360Controller.Axes.LT.SetState(0)
         PreciseSleep(1000)
-
-        controller_aim_ver(90,475)      ;; 425
-        controller_aim_hor(10,300)     ;; 2100
-
+        ;; move reticle to the second position
+        controller_aim_ver(90,475)
+        controller_aim_hor(10,300)
+        ;; start adsing again
         360Controller.Axes.LT.SetState(100)
 
+        ;; look for chests 18 and 20
         while(chest_found == 16)    ; loop until a chest that isn't chest 16 is found (or 5 seconds passes)
         {
-            loop, %g4_index%
+            loop, %g4_index%    ; loop through the array from above.
             {
                 coords := g4_coords[A_Index]
                 coords := StrSplit(coords, "|")
@@ -1263,11 +1274,11 @@ Return
         
         if(DEBUG_VERBOSE)
             FileAppend, INFO - No chests found | Defaulting to Chest 16`n, %db_logfile%
-        360Controller.Axes.LT.SetState(0)
+        360Controller.Axes.LT.SetState(0)   ; stop ADSing
         Return chest_found
     }
 
-    TO_run_to_chest21()
+    TO_run_to_chest21() ; run to chest 21
     {
         chest_21_opened := false
         CHEST_OPENED := false
@@ -1285,10 +1296,11 @@ Return
         controller_aim_hor(10,1000)         ; Aim left towards chest to loot
         controller_aim_ver(10,500)          ; Aim down at chest to loot
         
-        StartMonitoring(CHEST_PID)
-        StartMonitoring(EXOTIC_PID)
+        StartMonitoring(CHEST_PID)      ; sends a call to the chest monitoring to start
+        StartMonitoring(EXOTIC_PID)     ; sends a call to the exotic monitoring to start
         PreciseSleep(500)
  
+        ; fucking loot the chest
         360Controller.Buttons.X.SetState(true)
         PreciseSleep(1300)
         360Controller.Buttons.X.SetState(false)
@@ -1301,43 +1313,42 @@ Return
             get_screenshot(filename,1)
         }
 
-        if(CHEST_OPENED)
+        if(CHEST_OPENED) ; if you can't understand what IF(CHEST_OPENED) means I can't help you. you're probably retarded
         {
             if(DEBUG_VERBOSE)
                 FileAppend, SUCCESS - Looted chest 21`n, %db_logfile%
             chest_21_opened := true
         }
-        else
+        else    
         {        
             if(DEBUG)
             {
                 FileAppend, ATTENTION - Did not succesfully loot chest 21`n, %db_logfile%
             }
-            StopMonitoring(CHEST_PID)
         }
+        StopMonitoring(CHEST_PID)
         CHEST_OPENED := False
         Return chest_21_opened
     }
 
-    TO_run_to_G4_chest(chest)
+    TO_run_to_G4_chest(chest)   ; runs to the chest we found in group 4
     {
         g4_chest_opened := false
         CHEST_OPENED := false
-
-        ;chest = 19
 
         360Controller.Buttons.Y.SetState(True)
         controller_move_hor(100,700)
         360Controller.Buttons.Y.SetState(False)
         controller_aim_hor(85,1000)
         controller_aim_ver(10,475)
-        StopMonitoring(EXOTIC_PID)
-        if (EXOTIC_DROP)
+        StopMonitoring(EXOTIC_PID)  ; stops looking for exotics from chest 21
+        if(EXOTIC_DROP)
             PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_exotics"]++
         EXOTIC_DROP := false
         controller_sprint(2500)
 
-        if(chest == 17)
+        ;; if the ordering here bothers you, eat my ass
+        if(chest == 17) ; runs to chest 17
         {
             controller_sprint(1250)
             controller_aim_hor(10,2100)
@@ -1411,7 +1422,7 @@ Return
             }
         }
 
-        else if(chest == 20)
+        else if(chest == 20) ; runs to chest 20
         {
             controller_sprint(500)
             controller_move_hor(0,500)
@@ -1474,7 +1485,7 @@ Return
             }
         }
 
-        else if(chest == 19)
+        else if(chest == 19) ; runs to chest 19
         {
             if(CURRENT_GUARDIAN == "Warlock")
             {
@@ -1562,19 +1573,8 @@ Return
             }
         }
 
-        else if(chest == 16)
+        else if(chest == 16) ; runs to chest 16
         {
-            /*
-            controller_sprint(1500)
-            controller_move_hor(0,2000)
-            controller_sprint(1400)
-            controller_move_hor(100,750)
-            controller_aim_hor(,1025)
-            controller_sprint(8500)
-            controller_aim_hor(15,1200)
-            controller_sprint(400)
-            */
-
             controller_sprint(1500)
             controller_move_hor(0,2000)
             controller_sprint(1400)
@@ -1587,7 +1587,7 @@ Return
             controller_sprint(400)
         }
 
-        else if(chest == 18)
+        else if(chest == 18) ; runs to chest 18
         {
             controller_sprint(1500)
             controller_move_hor(0,2000)
@@ -1599,14 +1599,13 @@ Return
             controller_aim_ver(15,500)
         }
 
-        else
+        else    ; AW SHIT SOMEETHING IS FUCKED UP
         {
             if(DEBUG)
                 FileAppend, MAJORFUCKUP - Somehow we started running without a group 4 chest input - who the fuck knows`n, %db_logfile%
             Return False
         }
         
-
         StartMonitoring(CHEST_PID)
         StartMonitoring(EXOTIC_PID)
         PreciseSleep(500)
@@ -1622,7 +1621,7 @@ Return
             get_screenshot(filename,1)
         }
 
-        if (CHEST_OPENED)
+        if(CHEST_OPENED) ; if you can't tell what this does you need a doctor
         {   
             if(DEBUG_VERBOSE)
                 FileAppend, SUCCESS - Looted chest %chest%`n, %db_logfile%
@@ -1632,8 +1631,8 @@ Return
         {
             if(DEBUG)
                 FileAppend, ATTENTION - Failed to loot chest %chest%`n, %db_logfile%
-            StopMonitoring(CHEST_PID)
         }
+        StopMonitoring(CHEST_PID)
         CHEST_OPENED := False
         Return g4_chest_opened
     }
@@ -1643,22 +1642,22 @@ Return
 ; Monitoring Functions
 ; =================================== ;
 
-    StartMonitoring(target_pid)
+    StartMonitoring(target_pid) ; sends a message to the helper script to start
     {
         PostMessage, 0x1001, 0, 0, , % "ahk_pid " target_pid
     }
 
-    StopMonitoring(target_pid)
+    StopMonitoring(target_pid) ; sends a message to the helper script to stop
     {
         PostMessage, 0x1002, 0, 0, , % "ahk_pid " target_pid
     }
 
-    on_chest_open(wParam, lParam, msg, hwnd)
+    on_chest_open(wParam, lParam, msg, hwnd) ; receives a message from the helper chest script telling us if one was found
     {
         CHEST_OPENED := true
     }
 
-    on_exotic_drop(wParam, lParam, msg, hwnd)
+    on_exotic_drop(wParam, lParam, msg, hwnd) ; receives a message from the helper exotic script telling us if one was found
     {
         EXOTIC_DROP := true
     }
@@ -2095,7 +2094,7 @@ Return
         }
 
         search_start := A_TickCount
-        while (TO_color_check("803|270|42|60",0xFFFFFF,"MiscDetections\CharacterChangeMenu") < 0.03)
+        while (TO_color_check("803|270|42|60",0xFFFFFF,"MiscDetections\CharacterChangeMenu") < 0.01)
         {
             if (A_TickCount - search_start > 90000)
                 break
@@ -2383,7 +2382,7 @@ Return
 
 ; Custom Controller Movement Functions
 ; =================================== ;
-    controller_move_hor(per, time)
+    controller_move_hor(per, time) ; move horizontally, 0 is left 100 is right 50 is to stop. anything in between behaves as if you are only slightly moving the stick
     {
         PreciseSleep(100)
         360Controller.Axes.LX.SetState(per)
@@ -2392,7 +2391,7 @@ Return
         PreciseSleep(100)
     }
 
-    controller_move_ver(per,time)
+    controller_move_ver(per,time) ; move vertically, same shit as above but 0 is down and 100 is up
     {
         PreciseSleep(100)
         360Controller.Axes.LY.SetState(per)
@@ -2401,7 +2400,7 @@ Return
         PreciseSleep(100)
     }
 
-    controller_aim_hor(per, time)
+    controller_aim_hor(per, time) ; bruh do you really need me to explain this
     {
         PreciseSleep(100)
         360Controller.Axes.RX.SetState(per)
@@ -2410,7 +2409,7 @@ Return
         PreciseSleep(100)
     }
 
-    controller_aim_ver(per,time)
+    controller_aim_ver(per, time) ; stop reading these commments you'll catch my brain rot
     {
         PreciseSleep(100)
         360Controller.Axes.RY.SetState(per)
@@ -2419,17 +2418,23 @@ Return
         PreciseSleep(100)
     }
 
-    controller_sprint(time)
+    controller_sprint(time) ; HURR DURR MOVE FAST
     {
         360Controller.Buttons.LS.SetState(True)
         controller_move_ver(100,time)
         360Controller.Buttons.LS.SetState(False)
     }
 
-    controller_sniper(mode:=0)
+    controller_sniper(mode:=0) ; switches to the selected sniper
     {
+        ; this function was a pain in the ass
+        ; the logic goes as follows
+        ; 1 - If your heavy weapon is not stowed it switches weapon once just in case
+        ; 2 - Pull out heavy weapon again
+        ; 3 - Switch off of heavy weapon to force switching back to your primary slot
+        ; 4 - If you selected energy aachen swap once more to secondary slot
         anti_bungie_fuckassery()
-        if(!(TO_color_check("385|672|2|2",0xFF9AC1,"MiscDetections\WeaponSwap") > .3) && !(TO_color_check("385|672|2|2",0xFF99C2,"MiscDetections\WeaponSwap") > .3)) ; heavy ammo
+        if(!(TO_color_check("385|672|2|2",0xFF9AC1,"MiscDetections\WeaponSwap") > .3) && !(TO_color_check("385|672|2|2",0xFF99C2,"MiscDetections\WeaponSwap") > .3)) ; if heavy ammo is not found in it's expected location send a quick weapon swap to reset heavy back to holstered
         {
             PreciseSleep(50)
             360Controller.Buttons.Y.SetState(True)
@@ -2437,6 +2442,7 @@ Return
             360Controller.Buttons.Y.SetState(False)
             PreciseSleep(50)
         }
+        ; pull out heavy weapon and then stow it to reset to the kinetic slot
         360Controller.Buttons.Y.SetState(True)
         PreciseSleep(500)
         360Controller.Buttons.Y.SetState(False)
@@ -2445,7 +2451,7 @@ Return
         PreciseSleep(50)
         360Controller.Buttons.Y.SetState(False)
         PreciseSleep(50)
-        if(mode == 1)
+        if(mode == 1)   ; if secondary slot is selected for sniper send one more weapon swap input to switch to energy
         {
             360Controller.Buttons.Y.SetState(True)
             PreciseSleep(50)
@@ -2454,7 +2460,7 @@ Return
         }
     }
 
-    anti_bungie_fuckassery()
+    anti_bungie_fuckassery() ; bungie eats inputs sometimes, this just makes sure they eat my ass instead
     {
         360Controller.Buttons.RS.SetState(True)     ;
         PreciseSleep(50)                            ; DESPITE ALL OF MY RAGE
@@ -2534,9 +2540,11 @@ Return
 
     }
 
-    TO_color_check(coords, base_color:=0xFFFFFF,filename:="test") ; also bad function to check for specific color pixels in a given area
+ ; NOT BAD FUNCTION FOR CHECKING IF AN IMAGE HAS ENUFF OF A SPECIFIC COLOR IN IT (defaults to white)
+    TO_color_check(coords, base_color:=0xFFFFFF,filename:="test") ; IMPORTANT**** READ THIS****** The base_color is in BGR format. Yes. Blue Green Red. NOT RGB.
     {
-        colorcheckfilename := StrSplit(filename,"\")
+        ; debugging filename magic shit
+        colorcheckfilename := StrSplit(filename,"\") ; this just handles debugging filename stuff. splits out the \ in the filename
         if(colorcheckfilename[2] != "")
             tmp := colorcheckfilename[2]
         else
@@ -2544,29 +2552,30 @@ Return
         colorcheckfilename := tmp
         db_colorlog := db_folder . "ColorDetection.log"
         count := CURRENT_GUARDIAN . "_" . PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]
-        pD2WindowBitmap := Gdip_BitmapFromHWND(D2_WINDOW_HANDLE,clientOnly:=1)
+
+        ; actual code now
+        pD2WindowBitmap := Gdip_BitmapFromHWND(D2_WINDOW_HANDLE,clientOnly:=1) ; This gets a bitmap from the window handle we input this is what lets us do image detection in the background
         IF(DEBUG_VERBOSE)
         {
             IF(DEBUG_SCREENSHOTS)
                 Gdip_SaveBitmapToFile(pD2WindowBitmap, A_ScriptDir . "\debugs\Screenshots\" . filename . "_Full_" . count . ".png")
         }
-        width := Gdip_GetImageWidth(pD2WindowBitmap)
-        height := Gdip_GetImageHeight(pD2WindowBitmap)
-
-        ; convert the coords to be relative to destiny 
-        coords := StrSplit(coords, "|")
+        
+        width := Gdip_GetImageWidth(pD2WindowBitmap)    ; I DONT THINK I EVER EVEN USE THESE BUT IM NOT SURE AND I DONT WANT TO BREAK IT
+        height := Gdip_GetImageHeight(pD2WindowBitmap)  ; I DONT THINK I EVER EVEN USE THESE BUT IM NOT SURE AND I DONT WANT TO BREAK IT
+        coords := StrSplit(coords, "|") ; these I DEFINNITELY use
         x := coords[1]
         y := coords[2]
         w := coords[3]
         h := coords[4]
 
         ; Create a new bitmap with the cropped dimensions
-        pElementBitmap := Gdip_CreateBitmap(w, h)
-        G := Gdip_GraphicsFromImage(pElementBitmap)
-        Gdip_DrawImage(G, pD2WindowBitmap, 0, 0, w, h, x, y, w, h)
+        pElementBitmap := Gdip_CreateBitmap(w, h)   ; create an empty bitmap using the 
+        G := Gdip_GraphicsFromImage(pElementBitmap) ; create a pointer that does some magic that will modify the empty bitmap
+        Gdip_DrawImage(G, pD2WindowBitmap, 0, 0, w, h, x, y, w, h) ; copies the original bitmap we took from the hwnd, crops it, and then draws it into the empty bitmap using the pointer
 
-        Gdip_DisposeImage(pD2WindowBitmap)
-        ; save bitmap 
+        Gdip_DisposeImage(pD2WindowBitmap) ; clean up OUR FUCKING MESS
+
         IF(DEBUG_VERBOSE)
         {
             if(DEBUG_SCREENSHOTS)
@@ -2578,12 +2587,12 @@ Return
         total := 0
         if(DEBUG)
             FileAppend, INFO - %filename% | Color Check Started | %coords% %base_color%`n, %db_colorlog%
-        loop, %h%
+        loop, %h%   ; loop through pixel by pixel left to right, then down and repeat
         {
             loop, %w%
             {
-                color := (Gdip_GetPixelColor(pElementBitmap, colx, coly, 3))
-                if (color == base_color)
+                color := (Gdip_GetPixelColor(pElementBitmap, colx, coly, 3))    ; THSI VALUE RETURNS A BGR COLOR in the 0xBBGGRR FORMAT. DONT FUCK THIS UP WHEN SENGING COLORS FOR IT TO CHECK
+                if (color == base_color)    ; does the color we see match what we're looking for?
                     match += 1
                 total += 1
                 colx += 1
@@ -2593,8 +2602,8 @@ Return
             colx := 0
             coly += 1
         }
-        Gdip_DisposeImage(pElementBitmap)
-        pMatch := match/total
+        Gdip_DisposeImage(pElementBitmap)   ; CLEAN UP OUR FUCKING MESS GOD DAMN IT
+        pMatch := match/total   ; gets the percentage of matching pixels
         if(DEBUG)
             FileAppend, INFO - %filename% | Color Check Finished | %coords% %base_color% | %pMatch%`n, %db_colorlog%
         Return pMatch
@@ -2626,6 +2635,7 @@ Return
 ; =================================== ;
     check_for_updates()
     {
+        ; Looks for the most recent version published on my github and compares it to the running version
         version_url := "https://raw.githubusercontent.com/orchrist-pc/double-chest-tabbedout/main/_Libraries/version.txt"
         WebRequest := ComObjCreate("WinHttp.WinHttpRequest.5.1")
         WebRequest.Open("GET", version_url)
@@ -2635,6 +2645,7 @@ Return
             latest_version := Trim(WebRequest.ResponseText)
             if (latest_version != VERSION)
             {
+                ; Gives the option to ignore the update because I'm not your dad I can't tell you what to do
                 MsgBox,3, Update Available!, ********A new version is available********`n`nCurrent: v%VERSION%.`nLatest: v%latest_version%`n`n*Yes* to be taken to the latest release.`n*No* to continue using the current version.`n*Cancel* to close the script.
                 IfMsgBox, Yes
                 {
@@ -2781,7 +2792,7 @@ Return
         Return NumGet(TOKEN_ELEVATION, 0) != 0
     }
 
-    release_d2_bindings()
+    release_d2_bindings()   ; releases all keybinds and controller inputs because sometimes scripts are dumb
     {
         if(ENABLE_TABBEDOUT)
         {
@@ -2852,7 +2863,7 @@ Return
 ; Overlay and Stat Functions
 ; =================================== ;
 
-    toggle_gui(visibility := "",firstlaunch:=0)
+    toggle_gui(visibility := "",firstlaunch:=0) ; hide or show the stats overlay
     {
         if (visibility = "")
             visibility := (GUI_VISIBLE) ? "hide" : "show"
@@ -3172,9 +3183,9 @@ Return
             FileAppend, SETTINGS GUI END CG: %CURRENT_GUARDIAN% CC: %ClassChoice%, %db_logfile%
     Return
 
-    DebugChoiceChanged:
+    DebugChoiceChanged: ; this is called when the toggle for Debug changes at all
         Gui, user_input: Submit, NoHide
-        if(DEBUG || DEBUG_SCREENSHOTS || DEBUG_VERBOSE)
+        if(DEBUG || DEBUG_SCREENSHOTS || DEBUG_VERBOSE) ; delete existing debug data to start clean
         {
             tmpfiles := db_folder . "*.log"
             FileDelete, %tmpfiles%
@@ -3193,7 +3204,7 @@ Return
             label_version.update_content("v" . VERSION)
     Return
 
-    HideGUIChanged:
+    HideGUIChanged: ; this is called when the "do not show again" toggle changes at all
         Gui, user_input: Submit, NoHide
         if(hide_gui)
             HIDE_GUI := 1
@@ -3201,7 +3212,7 @@ Return
             HIDE_GUI := 0
     Return
 
-    ModeChoiceChanged:
+    ModeChoiceChanged: ; come on you should know how this runs based on context clues
         Gui, user_input: Submit, NoHide
         if(ModeChoice == "Tabbed Out")
             ENABLE_TABBEDOUT := 1
@@ -3252,17 +3263,17 @@ Return
         update_ui()
     Return
 
-    opendiscord:
+    opendiscord: ; button to launch the discord
         toggle_gui("hide")
         Run, https://thrallway.com/
     Return
 
-    openreadme:
+    openreadme: ; button to launch the setup guide readme on github
         toggle_gui("hide")
         Run, https://github.com/orchrist-pc/double-chest-tabbedout
     Return
 
-    defaultsettings:
+    defaultsettings: ; Deletes your INI file
         gui, destroy
         FileDelete, %settingsini%
         MsgBox,4, Reset Settings and Stats, ****WARNING****`n`nAre you sure you would like to delete your current stats and settings?`n`n**Yes** to delete your ini file.`n**No** to cancel.
